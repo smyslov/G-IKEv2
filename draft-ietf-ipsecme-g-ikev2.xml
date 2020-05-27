@@ -437,15 +437,27 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           may be included into SAg. Each Proposal contains a list of Transforms that the GM is able to
           support for that protocol. Valid transform types depend on the 
           protocol and are defined in <xref target="allowed_transforms" />.
+          Other transform types SHOULD NOT be included.
           The SPI length of each Proposal in an SAg is set to zero, and thus the SPI field is empty. 
-          The GCKS MUST ignore SPI field in the SAg payload. Generally, a single Proposal of each 
+          The GCKS MUST ignore SPI field in the SAg payload. 
+          </t>
+          
+          <t>Generally, a single Proposal of each 
           type will suffice, because the group member is not negotiating Transform sets, 
-          simply alerting the GCKS to restrictions it may have, however 
+          simply alerting the GCKS to restrictions it may have.
+          In particular, the restriction from Section 3.3 of <xref target="RFC7296" /> that 
+          AEAD and non-AEAD transforms must not be combined in a single proposal
+          doesn't hold when the SAg payload is being formed. However 
           if the GM has restrictions on combination of algorithms,
           this can be expressed by sending several proposals.</t>
 
           <t>Although the SAg payload is optional, it is RECOMMENDED for the GM to include
           this payload into the GSA_AUTH request to allow the GCKS to select an appropriate policy.
+          </t>
+          
+          <t>A GM may also indicate the suport for IPcomp by inclusion one or more the IPCOMP_SUPPORTED
+          notifications along with the SAg payload. The CPI in these notifications is set to zero
+          and MUST be ignored by the GCKS.
           </t>
 
           <t>Upon receiving the GSA_AUTH response, the initiator parses the
@@ -1507,8 +1519,8 @@ SK_e | SK_a | SK_w = KEYMAT
 Protocol    Mandatory Types                 Optional Types
 ----------------------------------------------------------
 GIKE_REKEY  ENCR, INTEG*, PRF, AUTH, GKM
-ESP         ENCR, ESN]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                      INTEG
-AH          INTEG, ESN]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
+ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                      INTEG
+AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
               ]]></artwork>
             </figure>
 
