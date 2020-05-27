@@ -1519,10 +1519,12 @@ SK_e | SK_a | SK_w = KEYMAT
 Protocol    Mandatory Types                 Optional Types
 ----------------------------------------------------------
 GIKE_REKEY  ENCR, INTEG*, PRF, AUTH, GKM
-ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                      INTEG
+ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                            INTEG
 AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
               ]]></artwork>
             </figure>
+
+            <!-- what about ESN transform? It seems we don't need it -->
 
             (*) If AEAD encryption algorithm is used, then INTEG transform
             MUST NOT be specified, otherwise it MUST be specified.
