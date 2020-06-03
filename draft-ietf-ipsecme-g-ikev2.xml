@@ -1191,9 +1191,9 @@ SK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
         default KWK (SK_w) should be used to extract this keying material.
         </t>
 
-        <t>For a multicast rekey SA multiple SA_KEY attribute may be present 
+        <t>For a multicast rekey SA multiple SA_KEY attributes may be present 
         depending on the key management policy employed by the GCKS. If multiple SA_KEY attributes 
-        are present then all of them should contain the same keying material encrypted with different keys.
+        are present then all of them MUST contain the same keying material encrypted using different keys.
         The GM in general is unaware of the GCKS's key management policy and can always use the same procedure to get 
         the keys. In particular, the GM's task is to find a way to decrypt at least one of the SA_KEY attributes
         using either the SK_w or the keys from the KEY_WRAP_KEY attributes that are present in the same message  
@@ -1206,7 +1206,7 @@ SK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
         with each group it is registered to and update it when needed.
         When the GSA_REKEY message is received the GM processes the received SA_KEY attributes 
         one by one trying to construct a new key path that starts from this attributes and 
-        ends with any key in the working Key Path or with the default KWK (SK_w(. 
+        ends with any key in the working Key Path or with the default KWK (SK_w). 
         </t>
 
         <t>In the simplest case the SA_KEY attribute is encrypted
@@ -1619,12 +1619,12 @@ XXXX -->
 
             <figure>
               <artwork align="center"><![CDATA[
-GSA Attributes          Value  Type    Multiple   Used In
----------------------------------------------------------------------
+GSA Attributes          Value  Type    Multiple  Used In
+----------------------------------------------------------------------
 Reserved                0
-GSA_KEY_LIFETIME        1      V       N          GIKE_REKEY, AH, ESP
-GSA_INITIAL_MESSAGE_ID  2      V       N          GIKE_REKEY
-GSA_NEXT_SPI            3      V       Y          GIKE_REKEY, AH, ESP
+GSA_KEY_LIFETIME        1      V       N         (GIKE_REKEY, AH, ESP)
+GSA_INITIAL_MESSAGE_ID  2      V       N         (GIKE_REKEY)
+GSA_NEXT_SPI            3      V       Y         (GIKE_REKEY, AH, ESP)
               ]]></artwork>
             </figure>
 
@@ -2636,12 +2636,12 @@ Private Use     1024-65535
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-GSA Attributes          Value  Type    Multiple   Used In
----------------------------------------------------------------------
+GSA Attributes          Value  Type    Multiple  Used In
+----------------------------------------------------------------------
 Reserved                0
-GSA_KEY_LIFETIME        1      V       N          GIKE_REKEY, AH, ESP
-GSA_INITIAL_MESSAGE_ID  2      V       N          GIKE_REKEY
-GSA_NEXT_SPI            3      V       Y          GIKE_REKEY, AH, ESP
+GSA_KEY_LIFETIME        1      V       N         (GIKE_REKEY, AH, ESP)
+GSA_INITIAL_MESSAGE_ID  2      V       N         (GIKE_REKEY)
+GSA_NEXT_SPI            3      V       Y         (GIKE_REKEY, AH, ESP)
 Unassigned             5-16383
 Private Use        16384-32767
           ]]></artwork>
