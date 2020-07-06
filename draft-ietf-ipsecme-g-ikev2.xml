@@ -455,7 +455,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           this payload into the GSA_AUTH request to allow the GCKS to select an appropriate policy.
           </t>
           
-          <t>A GM may also indicate the suport for IPcomp by inclusion one or more the IPCOMP_SUPPORTED
+          <t>A GM may also indicate the support for IPcomp by inclusion one or more the IPCOMP_SUPPORTED
           notifications along with the SAg payload. The CPI in these notifications is set to zero
           and MUST be ignored by the GCKS.
           </t>
@@ -579,7 +579,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
             to group members using IP multicast as a transport. This is not
             a real IKEv2 exchange, since no response messages are sent. This method is
             valuable for large and dynamic groups, and where policy may change
-            frequently and an scalable rekeying method is required. When the
+            frequently and a scalable rekeying method is required. When the
             GSA_REKEY is used, the IKEv2 SA protecting the member
             registration exchanges is usually terminated, and group members await
             policy changes from the GCKS via the GSA_REKEY messages.</t>
@@ -1619,12 +1619,12 @@ XXXX -->
 
             <figure>
               <artwork align="center"><![CDATA[
-GSA Attributes          Value  Type    Multiple  Used In
-----------------------------------------------------------------------
+GSA Attributes          Value  Type   Multiple  Used In
+---------------------------------------------------------------------
 Reserved                0
-GSA_KEY_LIFETIME        1      V       N         (GIKE_REKEY, AH, ESP)
-GSA_INITIAL_MESSAGE_ID  2      V       N         (GIKE_REKEY)
-GSA_NEXT_SPI            3      V       Y         (GIKE_REKEY, AH, ESP)
+GSA_KEY_LIFETIME        1      V      N         (GIKE_REKEY, AH, ESP)
+GSA_INITIAL_MESSAGE_ID  2      V      N         (GIKE_REKEY)
+GSA_NEXT_SPI            3      V      Y         (GIKE_REKEY, AH, ESP)
               ]]></artwork>
             </figure>
 
@@ -2440,7 +2440,7 @@ AUTH_KEY                3       V       N
       <section title="Mixing Preshared Keys in IKEv2 for Post-quantum Security">
         <t>G-IKEv2 can take advantage of the protection provided by
         Postquantum Preshared Keys (PPK) for IKEv2 <xref
-        target="I-D.ietf-ipsecme-qr-ikev2"></xref>. However, the use of 
+        target="RFC8784"></xref>. However, the use of 
         PPK leaves the initial IKE SA susceptible to quantum
         computer (QC) attacks. For this reason an alternative approach
         for using PPK in IKEv2 defined in <xref target="I-D.smyslov-ipsecme-ikev2-qr-alt" />
@@ -2636,12 +2636,12 @@ Private Use     1024-65535
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-GSA Attributes          Value  Type    Multiple  Used In
-----------------------------------------------------------------------
+GSA Attributes          Value  Type   Multiple  Used In
+---------------------------------------------------------------------
 Reserved                0
-GSA_KEY_LIFETIME        1      V       N         (GIKE_REKEY, AH, ESP)
-GSA_INITIAL_MESSAGE_ID  2      V       N         (GIKE_REKEY)
-GSA_NEXT_SPI            3      V       Y         (GIKE_REKEY, AH, ESP)
+GSA_KEY_LIFETIME        1      V      N         (GIKE_REKEY, AH, ESP)
+GSA_INITIAL_MESSAGE_ID  2      V      N         (GIKE_REKEY)
+GSA_NEXT_SPI            3      V      Y         (GIKE_REKEY, AH, ESP)
 Unassigned             5-16383
 Private Use        16384-32767
           ]]></artwork>
@@ -2671,7 +2671,7 @@ Private Use            16384-32767
           <preamble></preamble>
           <artwork align="left"><![CDATA[
 GKD Attributes      Value   Type    Multiple    Used In
----------------------------------------------------------------------
+------------------------------------------------------------
 Reserved            0
 SA_KEY              1       V       Y           (GIKE_REKEY)
                                     N           (AH, ESP)
@@ -2884,7 +2884,7 @@ Value       Notify Messages - Error Types
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7427.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7634.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8229.xml"?>
-      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-ipsecme-qr-ikev2.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8784.xml"?>
       <?rfc include="https://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-ipsecme-ikev2-multiple-ke.xml"?>
       <?rfc include="https://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.smyslov-ipsecme-ikev2-qr-alt.xml"?>
       <reference anchor="OFT"
