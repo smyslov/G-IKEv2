@@ -1165,7 +1165,7 @@ SK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
         of key management in the GCKS, which is free to implement various
         key management policies, such as direct transmitting of group SA
         keys or using some kind of key hierarchy (e.g. LKH). 
-        For all these policies the GMs' behaviour is the same.
+        For all these policies the GMs' behavior is the same.
         </t>
 
         <t>Each key is identified by a 32-bit number called Key ID.
@@ -1310,7 +1310,7 @@ SK_e | SK_a | SK_w = KEYMAT
       <section anchor="gsa_payload" title="Group Security Association Payload">
         <t>The Group Security Association (GSA) payload is used by the GCKS to
         assert security attributes for both Rekey and Data-security SAs.
-        The Payload Type for the Group Security Accosiation payload is fifty-one (51).
+        The Payload Type for the Group Security Association payload is fifty-one (51).
         </t>
     
         <figure title="GSA Payload Format" anchor="gsa_payload_format">
@@ -1342,7 +1342,7 @@ SK_e | SK_a | SK_w = KEYMAT
         <section anchor="group_policy" title="Group Policies">
           <t>Croup policies are comprised of two types of policy - Group SA (GSA) policy
           and Group Associated (GA) policy. GSA policy defines parameters 
-          for the Security Associacion for the group. Depending on the 
+          for the Security Association for the group. Depending on the 
           employed security protocol GSA policies may further be classified as
           rekeying SA policy (GSA KEK) and data traffic SA policy (GSA TEK).
           GSA payload may contain zero or one GSA KEK policy, zero or more GSA TEK policies, 
@@ -1458,14 +1458,14 @@ SK_e | SK_a | SK_w = KEYMAT
             The format is defined in IKEv2 <xref target="RFC7296"></xref>, section 3.3.2.
             The Last Substruc value in each Transform Substructure
             will be set to 3 except for the last one in the list, which is
-            set to 0. Section <xref target="gsa_transforms" /> describes using IKEv2 transforms
+            set to 0. <xref target="gsa_transforms" /> describes using IKEv2 transforms
             in GSA policy substructure.
             </t>
 
             <t>GSA Attributes (variable) - Contains policy attributes associated
             with the group SA. The following sections describe the possible
             attributes. Any or all attributes may be optional, depending on
-            the group SA protocol and the group policy. Section <xref target="gsa_attr" />
+            the group SA protocol and the group policy. <xref target="gsa_attr" />
             defines attributes used in GSA policy.</t>
           </list></t>
 
@@ -1535,7 +1535,7 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
               This values are from the IKEv2 Authentication Method registry <xref target="IKEV2-IANA"></xref>.
               Note, that this registry defines only 256 possible values, so even that Transform ID field
               in the Transform substructure allows for 65536 possible values, in case of 
-              the Authentication Method transform the valuse 257-65535 MUST NOT be used.
+              the Authentication Method transform the values 257-65535 MUST NOT be used.
               </t>
 
               <t>Among the currently defined authentication methods in the IKEv2 Authentication Method registry,
@@ -2681,7 +2681,7 @@ Private Use    16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "Memeber Key Download Attributes". The initial values of the new registry are:
+        <t>This document creates a new IANA registry "Member Key Download Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
@@ -3011,7 +3011,7 @@ KD(SA1(1{0}),GM(3{1},7{3},0{7})
         </t>
 
         <t>Similarly, when other GMs will be joining the group they will be provided with the corresponding 
-        keys, so after all the GMs will have the following working Key Pathes:
+        keys, so after all the GMs will have the following working Key Paths:
         <figure align="center">
           <artwork align="left"><![CDATA[
 A: 1->3->7      B: 1->3->8      C: 1->4->9,     D: 1->4->10
@@ -3032,7 +3032,7 @@ KD(SA2(0{0}))
           ]]></artwork>
         </figure>
 
-        All the GMs will be able to decrypt it and no changes in their working Key Pathes will take place.
+        All the GMs will be able to decrypt it and no changes in their working Key Paths will take place.
         </t>
       </section>
 
@@ -3073,11 +3073,11 @@ KD(SA3(1{0},SA3(15{0})),GM(6{15},16{15},11{16})
         <list style="symbols">
           <t>GMs A, B, C and D will be able to decrypt the SA_KEY attribute 1{0} by using
           the "1" key from their key path. Since no new GM_KEY attributes are in the new 
-          Key Path, they won't update their working Key Pathes.
+          Key Path, they won't update their working Key Paths.
           </t>
           <t>GMs G and H will construct new Key Path 15-&gt;0 and will be able to decrypt
-          the new GM_KEY 15 using the key 6 from their working Key Pathes. So, they will
-          update their working Key Pathes replacing their beginnings up to the key 6 
+          the new GM_KEY 15 using the key 6 from their working Key Paths. So, they will
+          update their working Key Paths replacing their beginnings up to the key 6 
           with the new Key Path (thus replacing the key 2 with the key 15).
           </t>
           <t>GM E will construct new Key Path 16-&gt;15-&gt;0 and will be able to decrypt
@@ -3092,7 +3092,7 @@ KD(SA3(1{0},SA3(15{0})),GM(6{15},16{15},11{16})
         </list>
         </t>
 
-        <t>Finally, the GMs will have the following working Key Pathes:
+        <t>Finally, the GMs will have the following working Key Paths:
         <figure align="center">
           <artwork align="left"><![CDATA[
 A: 1->3->7      B: 1->3->8      C: 1->4->9,     D: 1->4->10
