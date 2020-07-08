@@ -225,9 +225,8 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
             </figure>
 
             <t> Payloads defined as part of other IKEv2 extensions MAY also be included in 
-            these messages. Payloads that may optionally appear
-            will be shown in brackets, such as [ CERTREQ ], to indicate that a
-            certificate request payload can optionally be included.
+            these messages. Payloads that may optionally appear in G-IKEv2 messages
+            will be shown in brackets, such as [CERTREQ].
             </t>
     
             <t>G-IKEv2 defines several new payloads not used in IKEv2:</t>
