@@ -6,7 +6,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" docName="draft-ietf-ipsecme-g-ikev2-01" ipr="trust200902" obsoletes="6407">
+<rfc category="std" docName="draft-ietf-ipsecme-g-ikev2-02" ipr="trust200902" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -432,7 +432,8 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           <t>A GM may be limited in the types of Transforms that it is
           able or willing to use, and may find it useful to inform the GCKS
           which Transforms it is willing to accept for different security protocols. 
-          Proposals for Rekey SA (with protocol GIKE_REKEY) and for data security (AH and/or ESP) SAs 
+          Proposals for Rekey SA (with protocol GIKE_REKEY) and for data security 
+          (AH <xref target="RFC4302" /> and/or ESP <xref target="RFC4303" />) SAs 
           may be included into SAg. Each Proposal contains a list of Transforms that the GM is able to
           support for that protocol. Valid transform types depend on the 
           protocol and are defined in <xref target="allowed_transforms" />.
@@ -449,6 +450,22 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           doesn't hold when the SAg payload is being formed. However 
           if the GM has restrictions on combination of algorithms,
           this can be expressed by sending several proposals.</t>
+
+          <t>Proposal Num field in Proposal substructure is treated specially in SAg payload:
+          it allows a GM to indicate that algorithms used in Rekey SA and in 
+          data security (AH and/or ESP) SAs are dependent.
+          In particular, Proposals of different types having the same value in
+          Proposal Num field are treated as a set, so that if GCKS uses transforms
+          from one of such Proposal for one protocol, then it MUST only use transforms from 
+          one of the Proposals with the same value in Proposal Num field for other protocols.
+          For example, a GM may support algorithms X and Y for both Rekey and
+          data security SAs, but with a restriction that if X is used in Rekey SA, then only X can be used
+          in data security SAs, and the same for Y. 
+          To indicate this the GM sends several Proposals marking those of them that must be used in conjunction
+          by putting the same value in their Proposal Num field. 
+          In the simplest case when no dependency between transforms exists,
+          all Proposals in SAg payload will have the same value in Proposal Num field.
+          </t>
 
           <t>Although the SAg payload is optional, it is RECOMMENDED for the GM to include
           this payload into the GSA_AUTH request to allow the GCKS to select an appropriate policy.
@@ -716,19 +733,23 @@ P = InnerPlds
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ d |
 |                           Message ID                          | r |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | |
-|                          AdjustedLeng                         | | |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v |
+|                          AdjustedLen                          | | |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ x |
 | Next Payload  |C|  RESERVED   |         AdjustedPldLen        | | |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ E v
-|                     Initialization Vector                     | n
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v
+|                                                               | |
+~                     Initialization Vector                     ~ E
+|                                                               | n
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ c ^
 |                                                               | r |
 ~             Inner payloads (not yet encrypted)                ~   P
 |                                                               | P |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ l v
-|              Padding (0-255 octets)           |  Pad Length   | d
+~              Padding (0-255 octets)           |  Pad Length   | d
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |
+|                                                               | |
 ~                    Integrity Checksum Data                    ~ |
+|                                                               | |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v
               ]]></artwork>
               </figure>
@@ -1518,12 +1539,10 @@ SK_e | SK_a | SK_w = KEYMAT
 Protocol    Mandatory Types                 Optional Types
 ----------------------------------------------------------
 GIKE_REKEY  ENCR, INTEG*, PRF, AUTH, GKM
-ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                            INTEG
-AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
+ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                           INTEG, ESN
+AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                           ESN
               ]]></artwork>
             </figure>
-
-            <!-- what about ESN transform? It seems we don't need it -->
 
             (*) If AEAD encryption algorithm is used, then INTEG transform
             MUST NOT be specified, otherwise it MUST be specified.
@@ -1584,7 +1603,8 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
               The type of the Group Key Management Method transform is &lt;TBA by IANA&gt;.
               </t>
             </section>
-<!-- XXXX
+
+            <!-- XXXX
             <section anchor="mode" title="Encapsulation Mode Transform">
               <t>The Encapsulation Mode (MODE) transform is used in the data security policy
               to convey information about the mode the SA is to be created in.
@@ -1601,6 +1621,19 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
               </t>
             </section>
 XXXX -->
+
+            <section anchor="esn" title="Extended Sequence Number Transform">
+              <t>Extended Sequence Number (ESN) Transform is defined in <xref target="RFC7296" /> 
+              to allow using 64-bit sequence numbers in ESP and AH. Since both AH <xref target="RFC4302" />
+              and ESP <xref target="RFC4303" /> are defined so, that high-order 32 bits of extended sequence
+              numbers are never transferred on the wire, it makes using ESN in multicast data security SAs
+              problematic, because GMs that join group long after it is created will have to somehow learn the current high order 32 bits
+              of ESN for each sender in the group. The algorithm for doing this described in <xref target="RFC4302" />
+              and <xref target="RFC4303" /> is resource-consuming. For this reason
+              extended sequence numbers SHOULD NOT <!-- MUST NOT? --> be used for multicast data security SAs
+              and thus the ESN Transform SHOULD NOT <!-- MUST NOT? --> be included in the GSA Payload.
+              </t>
+            </section>
           </section>
 
           <section anchor="gsa_attr" title="GSA Attributes">
@@ -1608,7 +1641,7 @@ XXXX -->
             for the GSA policy. Unlike security parameters distributed via transforms,
             which are expected not to change over time (unless policy changes), 
             the parameters distributed via GSA attributes
-            may depend on the time the distribution takes place, on the
+            may depend on the time the provision takes place, on the
             existence of others group SAs or on other conditions.
             </t>
 
@@ -2104,7 +2137,7 @@ AUTH_KEY                3       V       N
               4.1.2.7 of <xref target="RFC5280" />. The signature
               algorithm that will use this key was specified in the Algorithm Identifier attribute of the 
               Authentication Method transform. The key MUST be compatible with this algorithm.
-              An RSA public key format is defined in <xref target="RFC3447" />, Section
+              An RSA public key format is defined in <xref target="RFC8017" />, Section
               A.1. DSS public key format is defined in <xref target="RFC3279" /> Section 2.3.2.
               For ECDSA Public keys, use format described in <xref target="RFC5480" /> Section 2.
               Other algorithms added to the IKEv2 Authentication Method
@@ -2857,19 +2890,22 @@ Value       Notify Messages - Error Types
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6054.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7296.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.4301.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.4302.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.4303.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"?>
-      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.3740.xml"?>
-      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.4046.xml"?>
-      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2627.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8126.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5280.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7427.xml"?>
     </references>
 
     <references title="Informative References">
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2409.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2627.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.3740.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.4046.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.3279.xml"?>
-      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.3447.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8017.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5480.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6407.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.3686.xml"?>
@@ -2880,7 +2916,6 @@ Value       Notify Messages - Error Types
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5723.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6467.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7383.xml"?>
-      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7427.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7634.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8229.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8784.xml"?>
