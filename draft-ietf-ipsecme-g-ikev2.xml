@@ -6,7 +6,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" docName="draft-ietf-ipsecme-g-ikev2-04" ipr="trust200902" obsoletes="6407">
+<rfc category="std" docName="draft-ietf-ipsecme-g-ikev2-05" ipr="trust200902" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -154,7 +154,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
       is the GSA_REKEY pseudo-exchange, which is a single message delivering group
       updates to the GMs.</t>
 
-      <section title="Requirements Language">
+      <section title="Requirements Notation">
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
         "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
         "OPTIONAL" in this document are to be interpreted as described in BCP
@@ -162,93 +162,188 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
         and only when, they appear in all capitals, as shown here.</t>
       </section>
 
-    <section title="G-IKEv2 Integration into IKEv2 Protocol">
-      <t>G-IKEv2 uses the security mechanisms of IKEv2 (peer authentication,
-      confidentiality, message integrity) to ensure that only authenticated
-      devices have access to the group policy and keys. The G-IKEv2 exchange
-      further provides group authorization, and secure policy and key download
-      from the GCKS to GMs. Some IKEv2 extensions require special handling if used with G-IKEv2. 
-      See <xref target="ike_ext" /> for more details.</t>
+      <section title="Terminology" anchor="terms">
+        <t> It is assumed that readers are familiar with the IPsec architecture <xref target="RFC4301" />,
+        its extension for multicast <xref target="RFC5374" />. This document defines an extension to the IKEv2 protocol 
+        <xref target="RFC7296" />, so it is assumed that readers have good understanding of this protocol.
+        </t>
 
-      <t>It is assumed that readers are familiar with the IKEv2 protocol, so
-      this document skips many details that are described in <xref
-      target="RFC7296"></xref>.</t>
-
-      <section title="G-IKEv2 Transport and Port">
-        <t>G-IKEv2 SHOULD use UDP port 848, the same as GDOI <xref
-        target="RFC6407"></xref>, because they serve a similar function. They
-        can use the same ports, just as IKEv1 and IKEv2 can share port 500.
-        The version number in the IKE header distinguishes the G-IKEv2
-        protocol from GDOI protocol <xref target="RFC6407"></xref>. G-IKEv2
-        MAY also use the IKEv2 ports (500, 4500), which would provide a
-        better integration with IKEv2. G-IKEv2 MAY also use TCP transport
-        for registration (unicast) IKE SA, as defined in <xref target="RFC8229" />.
+        <t>The following key terms are used throughout this document (mostly borrowed from <xref target="RFC5374" /> and <xref target="RFC6407" />).
+        <list style="hanging" hangIndent="6" >
+          <t hangText = "Group" >
+          <vspace blankLines="0"/>
+          A set of devices that work together to protect group
+          communications.
+          </t>
+          <t hangText = "Group Member (GM)" >
+          <vspace blankLines="0"/>
+          An IPsec device that belongs to a group.  A Group Member is
+          authorized to be a Group Sender and/or a Group Receiver.
+          </t>
+          <t hangText = "Group Receiver" >
+          <vspace blankLines="0"/>
+          A Group Member that is authorized to receive packets sent to a group by a Group Sender.
+          </t>
+          <t hangText = "Group Sender" >
+          <vspace blankLines="0"/>
+          A Group Member that is authorized to send packets to a group.
+          </t>
+          <t hangText = "Group Key Management (GKM) Protocol" >
+          <vspace blankLines="0"/>
+          A key management protocol used by a GCKS to distribute IPsec
+          Security Association policy and keying material.  A GKM protocol
+          is used when a group of IPsec devices require the same SAs.  For
+          example, when an IPsec SA describes an IP multicast destination,
+          the sender and all receivers need to have the group SA.
+          </t>
+          <t hangText = "Group Controller Key Server (GCKS)" >
+          <vspace blankLines="0"/>
+          A Group Key Management (GKM) protocol server that manages IPsec
+          state for a group.  A GCKS authenticates and provides the IPsec SA
+          policy and keying material to GKM Group Members.
+          </t>
+<!--          <t hangText = "Group Key Management Subsystem" >
+          <vspace blankLines="0"/>
+          A subsystem in an IPsec device implementing a Group Key Management
+          protocol.  The GKM subsystem provides IPsec SAs to the IPsec
+          subsystem on the IPsec device. 
+          </t> -->
+<!--            <t hangText = "Group Owner" >
+          <vspace blankLines="0"/>
+          An administrative entity that chooses the policy for a group.
+          </t> -->
+          <t hangText = "Data-Security SA" >
+          <vspace blankLines="0"/>
+          The security policy distributed by a GDOI GCKS
+          describing traffic that is expected to be protected by group
+          members.  This document described the distribution of IPsec AH
+          and ESP Data-Security SAs.
+          </t>
+          <t hangText = "Rekey SA" >
+          <vspace blankLines="0"/>
+          The security policy protecting Group Key Management Protocol.
+          </t>
+          <t hangText = "Group Security Association (GSA)" >
+          <vspace blankLines="0"/>
+          A collection of Data-Security Associations (SAs) and Rekey SAs
+          necessary for a Group Member to receive key updates.
+          A GSA describes the working policy for a group.  Refer to <xref target="RFC4046" />
+          for additional information.
+          </t>
+          <t hangText = "Traffic Encryption Key (TEK)" >
+          <vspace blankLines="0"/>
+          The symmetric cipher key used in a Data-Security SA (e.g., IPsec ESP) to protect trafic.
+          </t>
+          <t hangText = "Key Encryption Key (KEK)" >
+          <vspace blankLines="0"/>
+          The symmetric cipher key used in a Rekey SA to protect distribution of new keys.
+          </t>
+          <t hangText = "Key Wrap Key (KWK)" >
+          <vspace blankLines="0"/>
+          The symmetric cipher key used to protect another key.
+          </t>
+          <t hangText = "Logical Key Hierarchy (LKH)" >
+          <vspace blankLines="0"/>
+          A group management method defined in Section 5.4 of <xref target="RFC2627" />.
+          </t>
+        </list>
         </t>
       </section>
 
-      <section title="IKEv2 Header Initialization">
-        <t>The Major Version is (2) and Minor Version is (0) according to
-        IKEv2 <xref target="RFC7296"></xref>, and maintained in this
-        document. The G-IKEv2 IKE_SA_INIT, GSA_AUTH, GSA_REGISTRATION and GSA_INBAND_REKEY 
-        use the IKE SPI according to IKEv2 <xref target="RFC7296"></xref>,
-        section 2.6.</t>
+<!--
+      <section title="Acronyms and Abbreviations" anchor="abbrev">
+        <t>The following acronyms and abbreviations are used throughout this document.
+        </t>
       </section>
+-->
     </section>
 
     <section title="G-IKEv2 Protocol">
-        <section title="G-IKEv2 Payloads">
-            <t>In the following descriptions, the payloads contained in the G-IKEv2 
-            messages are indicated by names as listed below.</t>
-
-            <figure>
-                <preamble></preamble>
-                <artwork><![CDATA[
-     Notation      Payload 
-    ------------------------------------------------------------
-     AUTH          Authentication
-     CERT          Certificate
-     CERTREQ       Certificate Request
-     D             Delete
-     GSA           Group Security Association
-     HDR           IKEv2 Header
-     IDg           Identification - Group
-     IDi           Identification - Initiator
-     IDr           Identification - Responder
-     KD            Key Download
-     KE            Key Exchange
-     Ni, Nr        Nonce
-     N             Notify
-     SA            Security Association
-     SAg           Security Association - GM Supported Transforms
-                ]]></artwork>
-                <postamble></postamble>
-            </figure>
-
-            <t> Payloads defined as part of other IKEv2 extensions MAY also be included in 
-            these messages. Payloads that may optionally appear in G-IKEv2 messages
-            will be shown in brackets, such as [CERTREQ].
-            </t>
-    
-            <t>G-IKEv2 defines several new payloads not used in IKEv2:</t>
-            <t><list style="symbols">
-              <t>IDg (Group ID) - The GM requests the GCKS for membership into
-              the group by sending its IDg payload.</t>
-
-              <t>GSA (Group Security Association) - The GCKS sends the group
-              policy to the GM using this payload.</t>
-
-              <t>KD (Key Download) - The GCKS sends the keys and the security parameters 
-              to the GMs using the KD payload.</t>
-
-              <t>SAg (Security Association - GM Supported Transforms) - the GM sends
-              supported transforms, so that GCKS may select a policy appropriate for all members 
-              of the group.</t>
-            </list></t>
-
-            <t> The details of the contents of each payload are described in <xref
-            target="header_payload"></xref>. 
-            </t>
+      <section title="G-IKEv2 Integration into IKEv2 Protocol">
+        <t>G-IKEv2 uses the security mechanisms of IKEv2 (peer authentication,
+        confidentiality, message integrity) to ensure that only authenticated
+        devices have access to the group policy and keys. The G-IKEv2 exchange
+        further provides group authorization, and secure policy and key download
+        from the GCKS to GMs. Some IKEv2 extensions require special handling if used with G-IKEv2. 
+        See <xref target="ike_ext" /> for more details.</t>
+  
+        <t>It is assumed that readers are familiar with the IKEv2 protocol, so
+        this document skips many details that are described in <xref
+        target="RFC7296"></xref>.</t>
+  
+        <section title="G-IKEv2 Transport and Port">
+          <t>G-IKEv2 SHOULD use UDP port 848, the same as GDOI <xref
+          target="RFC6407"></xref>, because they serve a similar function. They
+          can use the same ports, just as IKEv1 and IKEv2 can share port 500.
+          The version number in the IKE header distinguishes the G-IKEv2
+          protocol from GDOI protocol <xref target="RFC6407"></xref>. G-IKEv2
+          MAY also use the IKEv2 ports (500, 4500), which would provide a
+          better integration with IKEv2. G-IKEv2 MAY also use TCP transport
+          for registration (unicast) IKE SA, as defined in <xref target="RFC8229" />.
+          </t>
         </section>
+  
+        <section title="IKEv2 Header Initialization">
+          <t>The Major Version is (2) and Minor Version is (0) according to
+          IKEv2 <xref target="RFC7296"></xref>, and maintained in this
+          document. The G-IKEv2 IKE_SA_INIT, GSA_AUTH, GSA_REGISTRATION and GSA_INBAND_REKEY 
+          use the IKE SPI according to IKEv2 <xref target="RFC7296"></xref>,
+          section 2.6.</t>
+        </section>
+      </section>
+
+      <section title="G-IKEv2 Payloads">
+          <t>In the following descriptions, the payloads contained in the G-IKEv2 
+          messages are indicated by names as listed below.</t>
+
+          <figure>
+              <preamble></preamble>
+              <artwork><![CDATA[
+   Notation      Payload 
+  ------------------------------------------------------------
+   AUTH          Authentication
+   CERT          Certificate
+   CERTREQ       Certificate Request
+   D             Delete
+   GSA           Group Security Association
+   HDR           IKEv2 Header
+   IDg           Identification - Group
+   IDi           Identification - Initiator
+   IDr           Identification - Responder
+   KD            Key Download
+   KE            Key Exchange
+   Ni, Nr        Nonce
+   N             Notify
+   SA            Security Association
+   SAg           Security Association - GM Supported Transforms
+              ]]></artwork>
+              <postamble></postamble>
+          </figure>
+
+          <t> Payloads defined as part of other IKEv2 extensions MAY also be included in 
+          these messages. Payloads that may optionally appear in G-IKEv2 messages
+          will be shown in brackets, such as [CERTREQ].
+          </t>
+  
+          <t>G-IKEv2 defines several new payloads not used in IKEv2:</t>
+          <t><list style="symbols">
+            <t>IDg (Group ID) - The GM requests the GCKS for membership into
+            the group by sending its IDg payload.</t>
+
+            <t>GSA (Group Security Association) - The GCKS sends the group
+            policy to the GM using this payload.</t>
+
+            <t>KD (Key Download) - The GCKS sends the keys and the security parameters 
+            to the GMs using the KD payload.</t>
+
+            <t>SAg (Security Association - GM Supported Transforms) - the GM sends
+            supported transforms, so that GCKS may select a policy appropriate for all members 
+            of the group.</t>
+          </list></t>
+
+          <t> The details of the contents of each payload are described in <xref
+          target="header_payload"></xref>. 
+          </t>
       </section>
 
       <section title="G-IKEv2 Member Registration and Secure Channel Establishment">
@@ -617,7 +712,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           <section title="GSA_REKEY">
             <t>The GCKS initiates the G-IKEv2 Rekey securely, usually using IP
             multicast. Since this rekey does not require a response and it sends
-            to multiple GMs, G-IKEv2 rekeying MUST NOT support IKE SA windowing.
+            to multiple GMs, G-IKEv2 rekeying MUST NOT use IKE SA windowing.
             The GCKS rekey message replaces the rekey GSA KEK or KEK array,
             and/or creates a new Data-Security GSA TEK. The SID Download
             attribute in the Key Download payload (defined in <xref
@@ -758,7 +853,7 @@ P = InnerPlds
               and the key provided before in the AUTH_KEY attribute. Depending on the authentication method
               the authentication data is either a digital signature or a result of applying prf from the Pseudorandom Function transform.
               The calculated authentication data is placed into the AUTH payload, the Length fields in the IKE Header and the Encryption Payload
-              header are restored,  the content of the Encrypted payload is encrypted and the ICV is computed using the current SKe/SKa keys.
+              header are restored,  the content of the Encrypted payload is encrypted and the ICV is computed using the current SK_e/SK_a keys.
               </t>
 
               <t> The calculation of authentication data MUST be applied to whole messages only, before possible IKE Fragmentation. 
@@ -1073,8 +1168,7 @@ P = InnerPlds
       </t>
 
       <section anchor="kwk" title="Key Wrap Keys">
-        <t>Every GM always knows 
-        at least one KWK - the KWK that is associated with the IKE SA
+        <t>Every GM always knows at least one KWK - the KWK that is associated with the IKE SA
         or multicast rekey SA the wrapped keys are sent over.
         In this document it is called default KWK and is denoted as SK_w.
         </t>
@@ -2827,6 +2921,9 @@ Value       Notify Messages - Error Types
       basis behind the protocol. Mike Sullenberger and Amjad Inamdar were
       instrumental in helping resolve many issues in several versions of the
       document.</t>
+
+      <t> The authors are grateful to Tero Kivinen for his careful review and valuable proposals how to improve the document.
+      </t>
     </section>
 
     <section anchor="Contributers" title="Contributors">
