@@ -242,6 +242,10 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           <vspace blankLines="0"/>
           The symmetric cipher key used to protect another key.
           </t>
+          <t hangText = "Sender-ID (SID)" >
+          <vspace blankLines="0"/>
+          A unigue identifier of a Group Sender in the context of an active GSA, used to form Initialization Vector (IV) in counter-based cipher modes.
+          </t>
           <t hangText = "Logical Key Hierarchy (LKH)" >
           <vspace blankLines="0"/>
           A group management method defined in Section 5.4 of <xref target="RFC2627" />.
@@ -260,12 +264,16 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
 
     <section title="G-IKEv2 Protocol">
       <section title="G-IKEv2 Integration into IKEv2 Protocol">
-        <t>G-IKEv2 uses the security mechanisms of IKEv2 (peer authentication,
+        <t>G-IKEv2 is an extension to IKEv2 and uses its security mechanisms (peer authentication,
         confidentiality, message integrity) to ensure that only authenticated
-        devices have access to the group policy and keys. The G-IKEv2 exchange
+        devices have access to the group policy and keys. G-IKEv2 
         further provides group authorization, and secure policy and key download
-        from the GCKS to GMs. Some IKEv2 extensions require special handling if used with G-IKEv2. 
-        See <xref target="ike_ext" /> for more details.</t>
+        from the GCKS to GMs. 
+        </t>
+
+        <t>G-IKEv2 is compatible with most IKEv2 extensions defined so far and it is believed that 
+        future IKEv2 extensions will also be possible to use with G-IKEv2. However some IKEv2 extensions require 
+        special handling if used with G-IKEv2. See <xref target="ike_ext" /> for more details.</t>
   
         <t>It is assumed that readers are familiar with the IKEv2 protocol, so
         this document skips many details that are described in <xref
@@ -286,8 +294,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
         <section title="IKEv2 Header Initialization">
           <t>The Major Version is (2) and Minor Version is (0) according to
           IKEv2 <xref target="RFC7296"></xref>, and maintained in this
-          document. The G-IKEv2 IKE_SA_INIT, GSA_AUTH, GSA_REGISTRATION and GSA_INBAND_REKEY 
-          use the IKE SPI according to IKEv2 <xref target="RFC7296"></xref>,
+          document. The G-IKEv2 exchanges use the IKE SPI according to IKEv2 <xref target="RFC7296"></xref>,
           section 2.6.</t>
         </section>
       </section>
@@ -346,42 +353,51 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           </t>
       </section>
 
-      <section title="G-IKEv2 Member Registration and Secure Channel Establishment">
+      <section title="G-IKEv2 Member Registration and Secure Channel Establishment" anchor="registration">
         <t>The registration protocol consists of a minimum of two messages
         exchanges, IKE_SA_INIT and GSA_AUTH; member registration may have a
         few more messages exchanged if the EAP method, cookie challenge (for
-        DoS protection) or negotiation of Diffie-Hellman group is included.
-        Each exchange consists of request/response pairs. The first exchange
+        DoS protection), negotiation of Diffie-Hellman group or IKEv2 extensions 
+        based on <xref target="I-D.ietf-ipsecme-ikev2-intermediate" /> 
+        are used. Each exchange consists of request/response pairs. The first exchange
         IKE_SA_INIT is defined in IKEv2 <xref target="RFC7296"></xref>. This
         exchange negotiates cryptographic algorithms, exchanges nonces and
-        does a Diffie-Hellman exchange between the group member (GM) and the
+        computes a shared key between the group member (GM) and the
         Group Controller/Key Server (GCKS).</t>
 
         <t>The second exchange GSA_AUTH authenticates the previous messages,
-        exchanges identities and certificates. These messages are encrypted
-        and integrity protected with keys established through the IKE_SA_INIT
-        exchange, so the identities are hidden from eavesdroppers and all
+        exchanges identities and certificates. The GSA_AUTH messages are encrypted
+        and integrity protected with keys established through the previous
+        exchanges, so the identities are hidden from eavesdroppers and all
         fields in all the messages are authenticated. The GCKS SHOULD
         authorize group members to be allowed into the group as part of the
         GSA_AUTH exchange. Once the GCKS accepts a group member to join a
         group it will download the data security keys (TEKs) and/or group key
-        encrypting key (KEK) or KEK array as part of the GSA_AUTH response
-        message. </t>
+        encrypting key (KEK) as part of the GSA_AUTH response message. </t>
 
         <section anchor="gsa_auth" title="GSA_AUTH exchange">
-          <t>After the group member and GCKS use the IKE_SA_INIT exchange to
-          negotiate cryptographic algorithms, exchange nonces, and perform a
-          Diffie-Hellman exchange as defined in IKEv2 <xref
-          target="RFC7296"></xref>, the GSA_AUTH exchange MUST complete before
-          any other exchanges can be done. The security properties of the
-          GSA_AUTH exchange are the same as the properties of the IKE_AUTH
-          exchange. It is used to authenticate the IKE_SA_INIT messages,
+          <t>After the group member and GCKS negotiate cryptographic algorithms, exchange nonces, 
+          and compute shared keys as defined in IKEv2 <xref target="RFC7296"></xref>, 
+          the GSA_AUTH exchange MUST complete before any other exchanges can be done. 
+          GSA_AUTH is used to authenticate the previous exchanges,
           exchange identities and certificates. G-IKEv2 also uses this
-          exchange for group member registration and authorization. Even
-          though the IKE_AUTH does contain the SA2, TSi, and TSr payload the
-          GSA_AUTH does not. They are not needed because policy is not
+          exchange for group member registration and authorization.
+          </t>
+
+          <t> The GSA_AUTH exchange is identical to the IKE_AUTH exchange with the 
+          difference that its goal is to establish multicast Data Security SAs
+          and optionally provide GM with the keys for Rekey SA. The set of payloads 
+          in the GSA_AUTH exchange is slightly different, because policy is not
           negotiated between the group member and the GCKS, but instead
-          downloaded from the GCKS to the group member.</t>
+          downloaded from the GCKS to the group member. Note also, that GSA_AUTH 
+          has its own exchange type, which is different from IKE_AUTH exchange type. 
+          </t>
+
+          <t>Nevertheless, the security properties of the GSA_AUTH exchange 
+          are the same as the properties of the IKE_AUTH exchange and
+          most IKEv2 extensions to the IKE_AUTH exchange 
+          (like <xref target="RFC6467" />) can also be used with the GSA_AUTH exchange. 
+          </t>
 
           <figure title="GSA_AUTH Request" anchor="gsa_auth_request">
               <preamble></preamble>
@@ -395,11 +411,10 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
               <postamble></postamble>
           </figure>
 
-          <t>After the IKE_SA_INIT exchange completes, the group member
-          initiates a GSA_AUTH request to join a group indicated by the IDg
-          payload. The GM MAY include an SAg payload declaring which
-          Transforms it is willing to accept. A GM that intends to emit
-          data packets SHOULD include a Notify payload status type of SENDER,
+          <t>The group member initiates a GSA_AUTH request to join a group indicated 
+          by the IDg payload. The GM MAY include an SAg payload declaring which
+          Transforms it is willing to accept. A GM that intends to act as Group Sender 
+          SHOULD include a Notify payload status type of SENDER,
           which enables the GCKS to provide any additional policy necessary by
           group senders.</t>
 
@@ -415,8 +430,8 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
               <postamble></postamble>
           </figure>
 
-          <t> The GCKS responds with IDr, optional CERT, and AUTH
-          material as if it were an IKE_AUTH. It also informs the group member
+          <t> The GCKS responds with IDr, optional CERT, and AUTH payloads 
+          as if it were an IKE_AUTH. It also informs the group member
           of the cryptographic policies of the group in the GSA payload and
           the key material in the KD payload. The GCKS can also include a
           Delete (D) payload instructing the group member to delete existing
@@ -520,7 +535,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           join. An initiator intending to emit data traffic SHOULD send a
           SENDER Notify payload status. The SENDER notification not only signifies that it
           is a sender, but provides the initiator the ability to request
-          Sender-ID values, in case the data security SA supports a counter
+          Sender-ID (SID) values, in case the data security SA supports a counter
           mode cipher. <xref target="counter-modes"></xref>) includes guidance
           on requesting Sender-ID values.</t>
 
@@ -990,10 +1005,10 @@ P = InnerPlds
             </section>
           </section>
 
-          <section title="Deletion of SAs">
+          <section title="Deletion of SAs" anchor="deletion" >
             <t>There are occasions when the GCKS may want to signal to group
             members to delete policy at the end of a broadcast, or if group
-            policy has changed. Deletion of keys MAY be accomplished by sending
+            policy has changed. Deletion of SAs is accomplished by sending
             the G-IKEv2 Delete Payload <xref target="RFC7296"></xref>, section
             3.11 as part of the GSA_REKEY pseudo-exchange as shown below.</t>
 
@@ -1002,24 +1017,53 @@ P = InnerPlds
               <artwork><![CDATA[
  Members (Responder)        GCKS (Initiator)
 --------------------       ------------------
-                      <--   HDR, SK{[GSA,] [KD,], [N] [D,] [AUTH]}
+                      <--   HDR, SK{[GSA,] [KD,] [N,] [D,] [AUTH]}
               ]]></artwork>
               <postamble></postamble>
             </figure></t>
 
-            <t>The GSA MAY specify the remaining active time of the remaining
+            <t>If GCKS has a unicast SA with group member then it can use the GSA_INBAND_REKEY
+            exchange to delete SAs.
+            </t>
+            
+            <t><figure title="SA Deletion in GSA_INBAND_REKEY" anchor="gsa_inband_rekey_sa_deletion">
+              <preamble></preamble>
+              <artwork><![CDATA[
+ Member (Responder)            GCKS (Initiator)
+--------------------          ------------------
+                        <--    HDR, SK{[GSA,] [KD,] [N,] [D,]}
+   HDR, SK{}            -->
+              ]]></artwork>
+              <postamble></postamble>
+            </figure></t>
+
+            <t>The GSA MAY specify the remaining active time of the 
             policy by using the DTD attribute in the GSA GAP. If a GCKS has no
             further SAs to send to group members, the GSA and KD payloads MUST
-            be omitted from the message. There may be circumstances where the
-            GCKS may want to start over with a clean state. If the administrator
-            is no longer confident in the integrity of the group, the GCKS can
-            signal deletion of all the policies of a particular TEK protocol by
-            sending a TEK with a SPI value equal to zero in the delete payload.
-            For example, if the GCKS wishes to remove all the KEKs and all the
-            TEKs in the group, the GCKS SHOULD send a Delete payload with a SPI
+            be omitted from the message. 
+            </t>
+
+            <t>There may be circumstances where the GCKS may want to start over 
+            with a clean state, for example in case it runs out of available SIDs. 
+            The GCKS can signal deletion of all the Data-security SAs by
+            sending a Delete payload with an SPI value equal to zero.
+            For example, if the GCKS wishes to remove the Rekey SA and all the
+            Data-security SAs, the GCKS sends a Delete payload with an SPI
             of zero and Protocol ID of AH or ESP, followed by another Delete payload
-            with a SPI of zero and Protocol ID of GIKE_REKEY, indicating that the KEK
-            SA should be deleted.</t>
+            with a SPI of zero and Protocol ID of GIKE_REKEY. 
+            </t>
+
+            <t>If a group member receives a Delete payload with zero SPI and protocol ID
+            of GIKE_REKEY either via multicast Rekey SA or via unicast SA using the GSA_INBAND_REKEY exchange, 
+            it means that the group member is excluded from the group. 
+            The group member MUST re-register if it wants to continue 
+            participating in this group. The registration is performed as described
+            in <xref target="registration" />. Note, that if the GSA_INBAND_REKEY exchange 
+            is used to exclude a group member from the group, and thus the unicast SA 
+            between the group member and the GCKS exists, then this SA persists after 
+            this exchange and the group member may use the GSA_REGISTRATION exchange 
+            to re-register.
+            </t>
           </section>
         </section>
 
@@ -1038,10 +1082,9 @@ P = InnerPlds
 
           <t>The GCKS distributes a unique key for each Data-Security SA.</t>
 
-          <t>The GCKS uses the method described in <xref
-          target="RFC6054"></xref>, which assigns each sender a portion of the
-          IV space by provisioning each sender with one or more unique SID
-          values.</t>
+          <t>The GCKS uses the method described in <xref target="RFC6054"></xref>, 
+          which assigns each sender a portion of the IV space by provisioning each 
+          sender with one or more unique SID values.</t>
 
           </list></t>
 
@@ -1050,75 +1093,66 @@ P = InnerPlds
             includes a counter-based mode of operation, the GCKS automatically
             allocates and distributes one SID to each group member acting in the
             role of sender on the Data-Security SA. The SID value is used
-            exclusively by the group member to which it was allocated. The group
-            member uses the same SID for each Data-Security SA specifying the
+            exclusively by the group sender to which it was allocated. The group
+            sender uses the same SID for each Data-Security SA specifying the
             use of a counter-based mode of operation. A GCKS MUST distribute
             unique keys for each Data-Security SA including a counter-based mode
             of operation in order to maintain unique key and nonce usage.</t>
 
-            <t>During registration, the group member can choose to request one
+            <t>During registration, the group sender can choose to request one
             or more SID values. Requesting a value of 1 is not necessary since
             the GCKS will automatically allocate exactly one to the group
-            member. A group member MUST request as many SIDs matching the number
+            sender. A group sender MUST request as many SIDs matching the number
             of encryption modules in which it will be installing the TEKs in the
-            outbound direction. Alternatively, a group member MAY request more
+            outbound direction. Alternatively, a group sender MAY request more
             than one SID and use them serially. This could be useful when it is
-            anticipated that the group member will exhaust their range of Data-
+            anticipated that the group sender will exhaust their range of Data-
             Security SA nonces using a single SID too quickly (e.g., before the
             time-based policy in the TEK expires).</t>
 
             <t>When the group policy includes a counter-based mode of operation,
             a GCKS SHOULD use the following method to allocate SID values, which
             ensures that each SID will be allocated to just one group
-            member.<list style="numbers">
+            sender.<list style="numbers">
 
             <t>A GCKS maintains an SID-counter, which records the SIDs that
             have been allocated. SIDs are allocated sequentially, with zero as
             the first allocated SID.</t>
 
             <t>Each time an SID is allocated, the current value of the
-            counter is saved and allocated to the group member. The SID-counter
+            counter is saved and allocated to the group sender. The SID-counter
             is then incremented in preparation for the next allocation.</t>
 
             <t>When the GCKS specifies a counter-based mode of operation in
-            the data security SA a group member may request a count of SIDs
+            the data security SA a group sender may request a count of SIDs
             during registration in a Notify payload information of type SENDER.
             When the GCKS receives this request, it increments the SID-counter
             once for each requested SID, and distributes each SID value to the
-            group member. The GCKS SHOULD have a policy-defined upper bound for
+            group sender. The GCKS SHOULD have a policy-defined upper bound for
             the number of SIDs that it will return irrespective of the number
             requested by the GM.</t>
 
-            <t>A GCKS allocates new SID values for each GSA_REGISTRATION
-            exchange originated by a sender, regardless of whether a group
-            member had previously contacted the GCKS. In this way, the GCKS is
+            <t>A GCKS allocates new SID values for each registration operation 
+            by a group sender, regardless of whether the group
+            sender had previously contacted the GCKS. In this way, the GCKS is
             not required to maintaining a record of which SID values it had
-            previously allocated to each group member. More importantly, since
-            the GCKS cannot reliably detect whether the group member had sent
+            previously allocated to each group sender. More importantly, since
+            the GCKS cannot reliably detect whether the group sender had sent
             data on the current group Data-Security SAs it does not know what
-            Data-Security counter-mode nonce values that a group member has
+            Data-Security counter-mode nonce values that a group sender has
             used. By distributing new SID values, the key server ensures that
-            each time a conforming group member installs a Data-Security SA it
+            each time a conforming group sender installs a Data-Security SA it
             will use a unique set of counter-based mode nonces.</t>
 
             <t>When the SID-counter maintained by the GCKS reaches its final
             SID value, no more SID values can be distributed. Before
-            distributing any new SID values, the GCKS MUST delete the
-            Data-Security SAs for the group, followed by creation of new
-            Data-Security SAs, and resetting the SID-counter to its initial
-            value.</t>
-
-            <t>The GCKS SHOULD send a GSA_REKEY message deleting all Data-
-            Security SAs and the Rekey SA for the group. This will result in the
-            group members initiating a new GSA_REGISTRATION exchange, in which
-            they will receive both new SID values and new Data-Security SAs. The
-            new SID values can safely be used because they are only used with
-            the new Data-Security SAs. Note that deletion of the Rekey SA is
-            necessary to ensure that group members receiving a GSA_REKEY
-            message before the re-register do not inadvertently use their old
-            SIDs with the new Data-Security SAs. Using the method above, at no
-            time can two group members use the same IV values with the same
-            Data-Security SA key.</t>
+            distributing any new SID values, the GCKS MUST 
+            exclude all group members from the group as described
+            in <xref target="deletion" />. This will result in the group members 
+            performing re-registration, during which they will receive new Data-Security SAs 
+            and group senders will additionally receive new SID values.
+            The new SID values can safely be used because they are only used with
+            the new Data-Security SAs.</t>
 
             </list></t>
           </section>
@@ -2199,7 +2233,7 @@ AUTH_KEY                3       V       N
           </section>
 
           <section anchor="mkd_attr_gm_sid" title="GM_SID Attribute">
-            <t>The GM_SID attribute is used to download one or more Sender-ID (SID)
+            <t>The GM_SID attribute is used to download one or more Sender-ID 
             values for the exclusive use of a group member. One or more of this attributes MUST be
             sent by the GCKS if the GM informed the GCKS that it would be a sender (by inclusion
             the SENDER notification to the request) and at least one of the data security SAs 
@@ -3016,6 +3050,7 @@ Value       Notify Messages - Error Types
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7634.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8229.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8784.xml"?>
+      <?rfc include="https://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-ipsecme-ikev2-intermediate.xml"?>
       <?rfc include="https://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-ipsecme-ikev2-multiple-ke.xml"?>
       <?rfc include="https://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.smyslov-ipsecme-ikev2-qr-alt.xml"?>
       <reference anchor="OFT"
