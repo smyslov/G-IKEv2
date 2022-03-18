@@ -83,8 +83,8 @@
       With G-IKEv2, the GCKS authenticates and authorizes GMs, then pushes
       policy and keys used by the group to the GM. G-IKEv2 includes two
       "registration" exchanges. The first is the GSA_AUTH exchange (
-      <xref target="gsa_auth" />), which follows an IKE_SA_INIT exchange. The
-      second is the GSA_REGISTRATION exchange (<xref target="gsa_registration" />), 
+      <xref target="gsa_auth" />), which is used when a GM first conatcts a GCKS. 
+      The second is the GSA_REGISTRATION exchange (<xref target="gsa_registration" />), 
       which a GM can use within an established IKE SA. Group rekeys are accomplished using either 
       the GSA_REKEY pseudo-exchange (a single message distributed to all GMs, usually as
       a multicast message), or as a GSA_INBAND_REKEY exchange delivered
@@ -125,7 +125,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
 
       <t>Alternatively, a small group may simply use the GSA_AUTH as a
       registration protocol, where the GCKS issues rekeys using the
-      GSA_INBAND_REKEY within the same IKEv2 SA. The GCKS is also likely to be
+      GSA_INBAND_REKEY within the same IKE SA. The GCKS is also likely to be
       a GM in a small group (as shown in <xref
       target="small-groups"></xref>.)</t>
 
@@ -148,6 +148,11 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
      +----ESP-----+------ESP-------+-----ESP-----+
 ]]></artwork>
       </figure>
+
+      <t> A combination of these approaches is also possible. For example,  
+      the GCKS may use more robust GSA_INBAND_REKEY to provide keys for some GMs 
+      (for example, those acting as senders in the group) and GSA_REKEY for the rest.
+      </t>
 
       <t>IKEv2 message semantics are preserved in that all communications
       consists of message request-response pairs. The exception to this rule
@@ -242,6 +247,10 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           <vspace blankLines="0"/>
           The symmetric cipher key used to protect another key.
           </t>
+          <t hangText = "Group Associated Policy (GAP)" >
+          <vspace blankLines="0"/>
+          Group-wide policy not related to a particular SA.
+          </t>
           <t hangText = "Sender-ID (SID)" >
           <vspace blankLines="0"/>
           A unigue identifier of a Group Sender in the context of an active GSA, used to form Initialization Vector (IV) in counter-based cipher modes.
@@ -289,14 +298,17 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           better integration with IKEv2. G-IKEv2 MAY also use TCP transport
           for registration (unicast) IKE SA, as defined in <xref target="RFC8229" />.
           </t>
+
+          <!-- XXXX  <t> DISCUSSION: What about switching to 4500 when 848 is used?
+          </t> -->
         </section>
   
-        <section title="IKEv2 Header Initialization">
+<!--        <section title="IKEv2 Header Initialization">
           <t>The Major Version is (2) and Minor Version is (0) according to
           IKEv2 <xref target="RFC7296"></xref>, and maintained in this
           document. The G-IKEv2 exchanges use the IKE SPI according to IKEv2 <xref target="RFC7296"></xref>,
           section 2.6.</t>
-        </section>
+        </section> -->
       </section>
 
       <section title="G-IKEv2 Payloads">
@@ -354,7 +366,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
       </section>
 
       <section title="G-IKEv2 Member Registration and Secure Channel Establishment" anchor="registration">
-        <t>The registration protocol consists of a minimum of two messages
+        <t>The registration protocol consists of a minimum of two 
         exchanges, IKE_SA_INIT and GSA_AUTH; member registration may have a
         few more messages exchanged if the EAP method, cookie challenge (for
         DoS protection), negotiation of Diffie-Hellman group or IKEv2 extensions 
@@ -362,10 +374,9 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
         are used. Each exchange consists of request/response pairs. The first exchange
         IKE_SA_INIT is defined in IKEv2 <xref target="RFC7296"></xref>. This
         exchange negotiates cryptographic algorithms, exchanges nonces and
-        computes a shared key between the group member (GM) and the
-        Group Controller/Key Server (GCKS).</t>
+        computes a shared key between the GM and the GCKS.</t>
 
-        <t>The second exchange GSA_AUTH authenticates the previous messages,
+        <t>The second exchange GSA_AUTH authenticates the previously exchanged messages,
         exchanges identities and certificates. The GSA_AUTH messages are encrypted
         and integrity protected with keys established through the previous
         exchanges, so the identities are hidden from eavesdroppers and all
@@ -378,19 +389,19 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
         <section anchor="gsa_auth" title="GSA_AUTH exchange">
           <t>After the group member and GCKS negotiate cryptographic algorithms, exchange nonces, 
           and compute shared keys as defined in IKEv2 <xref target="RFC7296"></xref>, 
-          the GSA_AUTH exchange MUST complete before any other exchanges can be done. 
-          GSA_AUTH is used to authenticate the previous exchanges,
+          the GSA_AUTH exchange MUST complete before any other exchanges defined in this document 
+          can be done. GSA_AUTH is used to authenticate the previous exchanges,
           exchange identities and certificates. G-IKEv2 also uses this
           exchange for group member registration and authorization.
           </t>
 
           <t> The GSA_AUTH exchange is identical to the IKE_AUTH exchange with the 
-          difference that its goal is to establish multicast Data Security SAs
+          difference that its goal is to establish multicast Data-Security SAs
           and optionally provide GM with the keys for Rekey SA. The set of payloads 
           in the GSA_AUTH exchange is slightly different, because policy is not
           negotiated between the group member and the GCKS, but instead
           downloaded from the GCKS to the group member. Note also, that GSA_AUTH 
-          has its own exchange type, which is different from IKE_AUTH exchange type. 
+          has its own exchange type, which is different from the IKE_AUTH exchange type. 
           </t>
 
           <t>Nevertheless, the security properties of the GSA_AUTH exchange 
@@ -411,7 +422,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
               <postamble></postamble>
           </figure>
 
-          <t>The group member initiates a GSA_AUTH request to join a group indicated 
+          <t>A group member initiates a GSA_AUTH request to join a group indicated 
           by the IDg payload. The GM MAY include an SAg payload declaring which
           Transforms it is willing to accept. A GM that intends to act as Group Sender 
           SHOULD include a Notify payload status type of SENDER,
@@ -425,7 +436,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
  Initiator (Member)             Responder (GCKS)
 --------------------           ------------------
                           <--   HDR, SK{IDr, [CERT,] 
-                                AUTH, [GSA, KD,] [N,] [D]}
+                                AUTH, [GSA, KD,] [N,]]]><!-- XXXX <![CDATA[ [D]]]> --><![CDATA[}
               ]]></artwork>
               <postamble></postamble>
           </figure>
@@ -433,23 +444,30 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           <t> The GCKS responds with IDr, optional CERT, and AUTH payloads 
           as if it were an IKE_AUTH. It also informs the group member
           of the cryptographic policies of the group in the GSA payload and
-          the key material in the KD payload. The GCKS can also include a
+          the key material in the KD payload. 
+
+          <!-- XXXX Do we need the following? It looks useless.
+          The GM which wants to join the group will not have any policy, 
+          and in any case even if it has, the policy will be replaces while it joins. --> 
+
+          <!-- The GCKS can also include a
           Delete (D) payload instructing the group member to delete existing
-          SAs it might have as the result of a previous group member
-          registration. Note, that since the GCKS generally doesn't know which 
+          SAs it might have as the result of a previous group member registration 
+          Note, that since the GCKS generally doesn't know which 
           SAs the GM has, the SPI field in the Delete payload(s) SHOULD be set to zero
           in this case. (See more discussion on the Delete payload in <xref
-          target="delete"></xref>.)</t>
+          target="delete"></xref>.) -->
+          </t>
 
           <t> In addition to the IKEv2 error handling, the GCKS can reject the
           registration request when the IDg is invalid or authorization fails,
           etc. In these cases, see <xref target="notify"></xref>, the GSA_AUTH
           response will not include the GSA and KD, but will include a Notify
-          payload indicating errors. If the group member included an SAg
-          payload, and the GCKS chooses to evaluate it, and it detects that
-          that group member cannot support the security policy defined for the
+          payload indicating errors. If a GM included an SAg
+          payload, and the GCKS chooses to evaluate it, and the GCKS detects that
+          the group member cannot support the security policy defined for the
           group, then the GCKS SHOULD return a NO_PROPOSAL_CHOSEN.
-          Other types of notifications can be AUTHORIZATION_FAILED or REGISTRATION_FAILED.</t>
+          Other types of error notifications can be INVALID_GROUP_ID, AUTHORIZATION_FAILED or REGISTRATION_FAILED.</t>
 
           <figure title="GSA_AUTH Error Response" anchor="gsa_auth_err_response">
               <preamble></preamble>
@@ -467,7 +485,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           </t>
         </section>
 
-        <section anchor="gsa_registration" title="GSA_REGISTRATION Exchange ">
+        <section anchor="gsa_registration" title="GSA_REGISTRATION Exchange">
           <t>When a secure channel is already established between a GM and the
           GCKS, the GM registration for a group can reuse the established
           secure channel. In this scenario the GM will use the
@@ -480,7 +498,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
  Initiator (Member)               Responder (GCKS)
 --------------------             ------------------
  HDR, SK{IDg, [SAg,][N ]} -->
-                             <--  HDR, SK{GSA,] [N,] [D]}
+                             <--  HDR, SK{GSA,] [N,]]]><!-- XXXX <![CDATA[ [D]]]> --><![CDATA[}
               ]]></artwork>
               <postamble></postamble>
           </figure>
@@ -505,10 +523,10 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
             </figure>
 
           <t>This exchange can also be used if the group member finds the
-          policy sent by the GCKS is unacceptable or for some reason wants to leave 
-          the group. The group member SHOULD
+          policy sent by the GCKS is unacceptable<!-- or for some reason wants to leave 
+          the group-->. The group member SHOULD
           notify the GCKS by sending IDg and the Notify type
-          NO_PROPOSAL_CHOSEN or REGISTRATION_FAILED, as shown below. 
+          NO_PROPOSAL_CHOSEN<!-- or REGISTRATION_FAILED-->, as shown below. 
           The GCKS in this case MUST remove the GM from the group IDg.</t>
 
           <figure title="GM Reporting Errors in GSA_REGISTRATION Exchange" anchor="gsa_registration_gm_error">
@@ -526,30 +544,33 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           <t>A G-IKEv2 Initiator (GM) requesting registration contacts the
           GCKS using the IKE_SA_INIT exchange and receives the response from
           the GCKS. This exchange is unchanged from the IKE_SA_INIT in IKEv2
-          protocol.</t>
+          protocol. The IKE_SA_INIT exchange may optionally be followed 
+          by one or more the IKE_INTERMEDIATE exchanges if the GM and the GCKS
+          negotiated using IKEv2 extensions based on this exchange.
+          </t>
 
-          <t>Upon completion of parsing and verifying the IKE_SA_INIT
-          response, the GM sends the GSA_AUTH message with the IKEv2 payloads
+          <t>Next the GM sends the GSA_AUTH request message with the IKEv2 payloads
           from IKE_AUTH (without the SAi2, TSi and TSr payloads) along with
           the Group ID informing the GCKS of the group the initiator wishes to
           join. An initiator intending to emit data traffic SHOULD send a
           SENDER Notify payload status. The SENDER notification not only signifies that it
           is a sender, but provides the initiator the ability to request
-          Sender-ID (SID) values, in case the data security SA supports a counter
+          Sender-ID (SID) values, in case the Data-Security SA supports a counter
           mode cipher. <xref target="counter-modes"></xref>) includes guidance
           on requesting Sender-ID values.</t>
 
           <t>A GM may be limited in the types of Transforms that it is
           able or willing to use, and may find it useful to inform the GCKS
-          which Transforms it is willing to accept for different security protocols. 
-          Proposals for Rekey SA (with protocol GIKE_REKEY) and for data security 
+          which Transforms it is willing to accept for different security protocols
+          by including the SAg payload into the request message.
+          Proposals for Rekey SA (with protocol GIKE_REKEY) and for Data-Security 
           (AH <xref target="RFC4302" /> and/or ESP <xref target="RFC4303" />) SAs 
-          may be included into SAg. Each Proposal contains a list of Transforms that the GM is able to
-          support for that protocol. Valid transform types depend on the 
+          may be included into SAg. Each Proposal contains a list of Transforms that the GM is able 
+          and willing to support for that protocol. Valid transform types depend on the 
           protocol and are defined in <xref target="allowed_transforms" />.
           Other transform types SHOULD NOT be included.
           The SPI length of each Proposal in an SAg is set to zero, and thus the SPI field is empty. 
-          The GCKS MUST ignore SPI field in the SAg payload. 
+          The GCKS MUST ignore SPI length and SPI fields in the SAg payload. 
           </t>
           
           <t>Generally, a single Proposal of each 
@@ -563,14 +584,14 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
 
           <t>Proposal Num field in Proposal substructure is treated specially in SAg payload:
           it allows a GM to indicate that algorithms used in Rekey SA and in 
-          data security (AH and/or ESP) SAs are dependent.
+          Data-Security (AH and/or ESP) SAs are dependent.
           In particular, Proposals of different types having the same value in
           Proposal Num field are treated as a set, so that if GCKS uses transforms
           from one of such Proposal for one protocol, then it MUST only use transforms from 
           one of the Proposals with the same value in Proposal Num field for other protocols.
           For example, a GM may support algorithms X and Y for both Rekey and
-          data security SAs, but with a restriction that if X is used in Rekey SA, then only X can be used
-          in data security SAs, and the same for Y. 
+          Data-Security SAs, but with a restriction that if X is used in Rekey SA, then only X can be used
+          in Data-Security SAs, and the same for Y. 
           To indicate this the GM sends several Proposals marking those of them that must be used in conjunction
           by putting the same value in their Proposal Num field. 
           In the simplest case when no dependency between transforms exists,
@@ -588,18 +609,18 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
 
           <t>Upon receiving the GSA_AUTH response, the initiator parses the
           response from the GCKS authenticating the exchange using the IKEv2
-          method, then processes the GSA and KD.</t>
+          method, then processes the GSA and KD payloads.</t>
 
           <t>The GSA payload contains the security policy and cryptographic
-          protocols used by the group. This policy describes the Rekey SA
-          (KEK), Data-security SAs (TEK), and other group policy
+          protocols used by the group. This policy describes the optional Rekey SA
+          (KEK), Data-security SAs (TEK), and optional Group Associated policy
           (GAP). If the policy in the GSA payload is not acceptable to the GM,
           it SHOULD notify the GCKS by initiating a GSA_REGISTRATION exchange 
           with a NO_PROPOSAL_CHOSEN Notify payload (see <xref target="gsa_registration"></xref>). 
           Note, that this should normally not happen if the GM includes SAg payload 
           in the GSA_AUTH request and the GCKS takes it into account.
-          Finally the KD are parsed providing the keying material for the TEK and/or KEK. The GM
-          interprets the KD key packets, where each key packet includes the
+          Finally the KD payload is parsed providing the keying material for the TEK and/or KEK. 
+          The GM interprets the KD key packets, where each key packet includes the
           keying material for SAs distributed in the GSA payload. Keying
           material is matched by comparing the SPIs in the key packets to SPIs
           previously included in the GSA payloads. Once TEK keys and policy
@@ -618,10 +639,21 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           GCKS must have a Message ID greater or equal to the Message ID
           received in the GSA_INITIAL_MESSAGE_ID attribute.</t>
 
-          <t>Once a GM has received GSA_REKEY policy during a registration the IKE SA
+          <t>Once a GM successfully registers to the group it MUST replace
+          any information related to this group (policy, keys) that it might
+          have as a result of a previous registration with a new one.
+          </t>
+
+          <t>Once a GM has received GIKE_REKEY policy during a registration the IKE SA
           may be closed. However, the GM SHOULD NOT close IKE SA, it is the GCKS
           who makes the decision whether to close or keep it, because depending on the policy 
-          the IKE SA may be used for inband rekeying for small groups.</t>
+          the IKE SA may be used for inband rekeying for small groups.
+          If inband rekeying is used, then the initial IKE SA is rekeyed (when necessary)
+          via standard IKEv2 mechanism described in Section 1.3.2 of <xref target="RFC7296" />. 
+          If for some reason this SA is teared down and no GIKE_REKEY policy was received during the registration process, 
+          the GM MUST consider itself excluded from the group. To continue participating
+          in the group the GM should re-register.
+          </t>
         </section>
 
         <section title="GCKS Registration Operations">
@@ -635,15 +667,16 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           GCKS then authorizes the group member according to group policy
           before preparing to send the GSA_AUTH response. If the GCKS fails to
           authorize the GM, it will respond with an AUTHORIZATION_FAILED
-          notify message.</t>
+          notify message. The GCKS may also respond with an INVALID_GROUP_ID notify message
+          if the requested group is unknown to the GCKS or with an REGISTRATION_FAILED
+          notify message if there is a problem with the requested group (for example
+          the capacity of the group is exceeded).</t>
 
           <t>The GSA_AUTH response will include the group policy in the GSA
           payload and keys in the KD payload. If the GCKS policy includes a
-          group rekey option, this policy is constructed in the GSA KEK and
-          the key is constructed in the KD KEK. The GSA KEK MUST include the
-          GSA_INITIAL_MESSAGE_ID attribute, specifying the starting Message ID the
-          GCKS will use when sending the GSA_REKEY message to the group
-          member if this Message ID is non-zero. This Message ID is used to prevent GSA_REKEY 
+          group rekey option, it MUST include the GSA_INITIAL_MESSAGE_ID attribute, 
+          specifying the starting Message ID the GCKS will use when sending the GSA_REKEY message
+          to the group members if this Message ID is non-zero. This Message ID is used to prevent GSA_REKEY 
           message replay attacks and will be increased each time a GSA_REKEY message is sent
           to the group. The GCKS data traffic policy is included in the GSA
           TEK and keys are included in the KD TEK. The GAP MAY also be
@@ -655,25 +688,33 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           of operation, the GCKS responds with one or more SIDs (see <xref
           target="counter-modes"></xref>).</t>
 
+          <t><xref target="RFC5374" /> defines two modes of operation for multicast 
+          Data-Securirt SAs: transport mode and tunnel mode with address preservation.
+          In the latter case outer source and destination addresses are taken from
+          the inner IP packet.
+          </t>
+
           <t>If the GCKS receives a GSA_REGISTRATION exchange with a request
           to register a GM to a group, the GCKS will need to authorize the GM
           with the new group (IDg) and respond with the corresponding group
           policy and keys. If the GCKS fails to authorize the GM, it will
-          respond with the AUTHORIZATION_FAILED notification.</t>
+          respond with the AUTHORIZATION_FAILED notification. The GCKS may also 
+          respond with an INVALID_GROUP_ID or REGISTRATION_FAILED notify messages 
+          for the reasons described above.</t>
 
           <t>If a group member includes an SAg in its GSA_AUTH or
-          GSA_REGISTRATION request, the GCKS MAY evaluate it according to an
+          GSA_REGISTRATION request, the GCKS may evaluate it according to an
           implementation specific policy.
             <list style="symbols">
               <t>The GCKS could evaluate the list of Transforms and compare it
               to its current policy for the group. If the group member did not
-              include all of the ESP or AH Transforms in its current policy,
-              then it could return a NO_PROPOSAL_CHOSEN Notification.</t>
+              include all of the ESP or AH Transforms that match the current group policy,
+              then the GCKS SHOULD return a NO_PROPOSAL_CHOSEN Notification.</t>
 
               <t>The GCKS could store the list of Transforms, with the goal of
-              migrating the group policy to a different Transform when all of
+              migrating the group policy to a different Transforms when all of
               the group members indicate that they can support that
-              Transform.</t>
+              Transforms.</t>
 
               <t>The GCKS could store the list of Transforms and adjust the
               current group policy based on the capabilities of the devices as
@@ -685,138 +726,139 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           exchange). If the GM does not initiate another registration exchange
           or Notify (e.g., NO_PROPOSAL_CHOSEN), and also does not close the
           IKE SA and the GCKS is not intended to use the SA, then after a
-          short period of time the GCKS SHOULD close the IKEv2 SA. The delay
-          before closing provides for receipt of a GM's error notification in
-          the event of packet loss.</t>
+          short period of time the GCKS SHOULD close the IKE SA.</t>
         </section>
+      </section>
 
-        <section title="Group Maintenance Channel">
-          <t>The GCKS is responsible for rekeying the secure group per the group
-          policy. Rekeying is an operation whereby the GCKS provides replacement
-          TEKs and KEK, deleting TEKs, and/or excluding group members. The GCKS
-          may initiate a rekey message if group membership and/or policy has
-          changed, or if the keys are about to expire. Two forms of group
-          maintenance channels are provided in G-IKEv2 to push new policy to
-          group members.</t>
+      <section title="Group Maintenance Channel">
+        <t>The GCKS is responsible for rekeying the secure group per the group
+        policy. Rekeying is an operation whereby the GCKS provides replacement
+        TEKs and KEK, deleting TEKs, and/or excluding group members. The GCKS
+        may initiate a rekey message if group membership and/or policy has
+        changed, or if the keys are about to expire. Two forms of group
+        maintenance channels are provided in G-IKEv2 to push new policy to
+        group members.</t>
 
-          <t><list style="hanging">
-            <t hangText="GSA_REKEY">The GSA_REKEY is a pseudo-exchange
-            initiated by the GCKS, where the rekey policy is usually delivered
-            to group members using IP multicast as a transport. This is not
-            a real IKEv2 exchange, since no response messages are sent. This method is
-            valuable for large and dynamic groups, and where policy may change
-            frequently and a scalable rekeying method is required. When the
-            GSA_REKEY is used, the IKEv2 SA protecting the member
-            registration exchanges is usually terminated, and group members await
-            policy changes from the GCKS via the GSA_REKEY messages.</t>
+        <t><list style="hanging">
+          <t hangText="GSA_REKEY">The GSA_REKEY is a pseudo-exchange
+          initiated by the GCKS, where the rekey policy is usually delivered
+          to group members using IP multicast as a transport. This is not
+          a real IKEv2 exchange, since no response messages are sent. This method is
+          valuable for large and dynamic groups, and where policy may change
+          frequently and a scalable rekeying method is required. When the
+          GSA_REKEY is used, the IKE SA protecting the member
+          registration exchanges is usually terminated, and group members await
+          policy changes from the GCKS via the GSA_REKEY messages.</t>
 
-            <t hangText="GSA_INBAND_REKEY">The GSA_INBAND_REKEY is a
-            normal IKEv2 exchange using the IKEv2 SA that was setup to protecting the
-            member registration exchange. This exchange allows the GCKS to
-            rekey without using an independent GSA_REKEY pseudo-exchange. The
-            GSA_INBAND_REKEY exchange provides a reliable policy delivery and 
-            is useful when G-IKEv2 is used with a small group of cooperating devices.</t>
-          </list>
+          <t hangText="GSA_INBAND_REKEY">The GSA_INBAND_REKEY is a
+          normal IKEv2 exchange using the IKE SA that was setup to protecting the
+          member registration exchange. This exchange allows the GCKS to
+          rekey without using an independent GSA_REKEY pseudo-exchange. The
+          GSA_INBAND_REKEY exchange provides a reliable policy delivery and 
+          is useful when G-IKEv2 is used with a small group of cooperating devices.</t>
+        </list>
 
-          Depending on the policy the GCKS MAY combine these two methods.
-          For example, it may use the GSA_INBAND_REKEY to deliver key to the 
-          GMs in the group acting as senders (as this would provide reliable keys delivery), 
-          and the GSA_REKEY for the rest GMs.
-          </t>
+        Depending on its policy the GCKS MAY combine these two methods.
+        For example, it may use the GSA_INBAND_REKEY to deliver key to the 
+        GMs in the group acting as senders (as this would provide reliable keys delivery), 
+        and the GSA_REKEY for the rest GMs.
+        </t>
 
-          <section title="GSA_REKEY">
-            <t>The GCKS initiates the G-IKEv2 Rekey securely, usually using IP
-            multicast. Since this rekey does not require a response and it sends
-            to multiple GMs, G-IKEv2 rekeying MUST NOT use IKE SA windowing.
-            The GCKS rekey message replaces the rekey GSA KEK or KEK array,
-            and/or creates a new Data-Security GSA TEK. The SID Download
-            attribute in the Key Download payload (defined in <xref
-            target="mkd_attr_gm_sid"></xref>) MUST NOT be part of the Rekey
-            Exchange as this is sender specific information and the Rekey
-            Exchange is group specific. The GCKS initiates the GSA_REKEY
-            pseudo-exchange as following:</t>
+        <section title="GSA_REKEY">
+          <t>The GCKS initiates the G-IKEv2 Rekey securely, usually using IP
+          multicast. Since this rekey does not require a response and it sends
+          to multiple GMs, G-IKEv2 rekeying MUST NOT use IKE SA windowing mechanism,
+          described in Section 2.3 of <xref target="RFC7296" />.
+          The GCKS rekey message replaces the rekey GSA KEK or KEK array,
+          and/or creates a new Data-Security GSA TEK. The GM_SID 
+          attribute in the Key Download payload (defined in <xref
+          target="mkd_attr_gm_sid"></xref>) MUST NOT be part of the Rekey
+          Exchange as this is sender specific information and the Rekey
+          Exchange is group specific. The GCKS initiates the GSA_REKEY
+          pseudo-exchange as following:</t>
 
-            <t><figure title="GSA_REKEY Pseudo-Exchange" anchor="gsa_rekey_exchange">
-              <preamble></preamble>
+          <t><figure title="GSA_REKEY Pseudo-Exchange" anchor="gsa_rekey_exchange">
+            <preamble></preamble>
 
-              <artwork><![CDATA[
- Members (Responder)           GCKS (Initiator)
+            <artwork><![CDATA[
+Members (Responder)           GCKS (Initiator)
 --------------------          ------------------
-                          <--  HDR, SK{GSA, KD, [N,] [D,] [AUTH]}
-              ]]></artwork>
-              <postamble></postamble>
-            </figure></t>
+                        <--  HDR, SK{GSA, KD, [N,] [D,] [AUTH]}
+            ]]></artwork>
+            <postamble></postamble>
+          </figure></t>
 
-            <t>HDR is defined in <xref target="header"></xref>. The Message ID
-            in this message will start with the value the GCKS sent to the
-            group members in the KEK attribute GSA_INITIAL_MESSAGE_ID or from
-            zero if this attribute wasn't sent. The Message ID will be incremented each time a new
-            GSA_REKEY message is sent to the group members.</t>
+          <t>HDR is defined in <xref target="header"></xref>. The Message ID
+          in this message will start with the value the GCKS sent to the
+          group members in the attribute GSA_INITIAL_MESSAGE_ID or from
+          zero if this attribute wasn't sent. The Message ID will be incremented each time a new
+          GSA_REKEY message is sent to the group members.</t>
 
-            <t>The GSA payload contains the current rekey and data security SAs.
-            The GSA may contain a new rekey SA and/or a new data security SA 
-            <xref target="gsa_payload"></xref>.</t>
+          <t>The GSA payload contains the current policy for rekey and Data-Security SAs.
+          The GSA may contain a new Rekey SA and/or a new Data-Security SAs 
+          <xref target="gsa_payload"></xref>.</t>
 
-            <t>The KD payload contains the keys for the policy included in the
-            GSA. If the data security SA is being refreshed in this rekey
-            message, the IPsec keys are updated in the KD, and/or if the rekey
-            SA is being refreshed in this rekey message, the rekey Key or the
-            LKH KEK array is updated in the KD payload.</t>
+          <t>The KD payload contains the keys for the policy included in the
+          GSA. If the Data-Security SA is being refreshed in this rekey
+          message, the IPsec keys are updated in the KD, and/or if the rekey
+          SA is being refreshed in this rekey message, the rekey Key or the
+          LKH KEK array is updated in the KD payload.</t>
 
-            <t>A Delete payload MAY be included to instruct the GM to delete
-            existing SAs.</t>
+          <t>A Delete payload MAY be included to instruct the GM to delete
+          existing SAs. See <xref target="delete" /> for more detail.</t>
 
-            <t>The AUTH payload MUST be included to authenticate the GSA_REKEY
-            message if the authentication method is based on public key signatures
-            or a dedicated shared secret and MUST NOT be included if authentication is implicit.
-            In a latter case, the fact that a GM can decrypt the GSA_REKEY message and verify its ICV 
-            proves that the sender of this message knows the current KEK,
-            thus authenticating that the sender is a member of the group. 
-            Shared secret and implicit authentication don't provide source origin authentication.
-            For this reason using them as authentication methods for GSA_REKEY is NOT RECOMMENDED 
-            unless source origin authentication is not required (for example, in a small group of
-            highly trusted GMs). If AUTH payload is included then the Auth Method field MUST NOT 
-            be NULL Authentication.</t>
-          
-            <t> During group member registration, the GCKS
-            sends the authentication key in the GSA KEK payload, AUTH_KEY
-            attribute, which the group member uses to authenticate the key
-            server. Before the current Authentication Key expires, the GCKS will
-            send a new AUTH_KEY to the group members in a GSA_REKEY message.
-            The AUTH key that is used in the rekey message may be not the same
-            as the authentication key used in GSA_AUTH. If implicit authentication
-            is used, then AUTH_KEY MUST NOT be sent to GMs.</t>
+          <t>The AUTH payload MUST be included to authenticate the GSA_REKEY
+          message if the authentication method is based on public key signatures
+          or a dedicated shared secret and MUST NOT be included if authentication is implicit.
+          In a latter case, the fact that a GM can decrypt the GSA_REKEY message and verify its ICV 
+          proves that the sender of this message knows the current KEK,
+          thus authenticating that the sender is a member of the group. 
+          Shared secret and implicit authentication don't provide source origin authentication.
+          For this reason using implicit authentication for GSA_REKEY is NOT RECOMMENDED 
+          unless source origin authentication is not required (for example, in a small group of
+          highly trusted GMs). If AUTH payload is included then the Auth Method field MUST NOT 
+          be NULL Authentication.</t>
+        
+          <t> During group member registration, the GCKS
+          sends the authentication key in the KD payload, AUTH_KEY attribute, 
+          which the group member uses to authenticate the key
+          server. Before the current Authentication Key expires, the GCKS will
+          send a new AUTH_KEY to the group members in a GSA_REKEY message.
+          The AUTH key that is sent in the rekey message may be not the same
+          as the authentication key sent during the GM registration. If implicit authentication
+          is used, then AUTH_KEY MUST NOT be sent to GMs.</t>
 
-            <section anchor="gsa_rekey_auth" title="GSA_REKEY Messages Authentication">
-              <t>The content of the AUTH payload depends on the authentication method and is either
-              a digital signature or a result of prf applied to the content of the not yet encrypted GSA_REKEY message.
-              </t>
+          <section anchor="gsa_rekey_auth" title="GSA_REKEY Messages Authentication">
+            <t>The content of the AUTH payload depends on the authentication method and is either
+            a digital signature or a result of prf applied to the content of the not yet encrypted GSA_REKEY message.
+            </t>
 
-              <t>The authentication algorithm (prf or digital signing) is applied to the concatenation of two chunks: A and P. 
-              The chunk A lasts from the first octet of the G-IKEv2 Header (not including prepended four octets of zeros, if port 4500 is used) 
-              to the last octet of the Encrypted Payload header. The chunk P consists of the not yet encrypted content of the Encrypted payload, excluding 
-              the Initialization Vector, the Padding, the Pad Length and the Integrity Checksum Data fields (see 3.14 of <xref target="RFC7296" /> for description 
-              of the Encrypted payload). In other words, the P chunk is the inner payloads of the Encrypted payload in plaintext form. 
-              These inner payloads must be fully formed and ready for encryption except for the AUTH payload.
-              <xref target="auth_data" /> illustrates the layout of the P and A chunks in the GSA_REKEY message.
-              </t>
+            <t>The authentication algorithm (prf or digital signing) is applied to the concatenation of two chunks: A and P. 
+            The chunk A lasts from the first octet of the G-IKEv2 header (not including prepended four octets of zeros, if port 4500 is used) 
+            to the last octet of the Encrypted Payload header. The chunk P consists of the not yet encrypted content of the Encrypted payload, excluding 
+            the Initialization Vector, the Padding, the Pad Length and the Integrity Checksum Data fields (see 3.14 of <xref target="RFC7296" /> for description 
+            of the Encrypted payload). In other words, the P chunk is the inner payloads of the Encrypted payload in plaintext form. 
+            <xref target="auth_data" /> illustrates the layout of the P and A chunks in the GSA_REKEY message.
+            </t>
 
-              <t>The AUTH payload must have correct values in the Payload Header, the Auth Method and the RESERVED fields.
-              The Authentication Data field is zeroed, but if Digital Signature authentication 
-              method is in use, then the ASN.1 Length and the AlgorithmIdentifier fields must be properly filled in, see <xref target="RFC7427" />. 
-              </t>
+            <t>Before the AUTH payload calculation the inner payloads of Encrypted payload must be 
+            fully formed and ready for encryption except for the AUTH payload.
+            The AUTH payload must have correct values in the Payload Header, the Auth Method and the RESERVED fields.
+            The Authentication Data field is zeroed, but if Digital Signature authentication 
+            method is in use, then the ASN.1 Length and the AlgorithmIdentifier fields must be properly filled in, see <xref target="RFC7427" />. 
+            </t>
 
-              <t>For the purpose of the AUTH payload calculation the Length field in the IKE header and the Payload Length 
-              field in the Encrypted Payload header are adjusted so that they don't count the lengths
-              of Initialization Vector, Integrity Checksum Data and Padding (along with Pad Length field).
-              In other words, the Length field in the IKE header (denoted as AdjustedLen in  
-              <xref target="auth_data" /> ) is set to the sum of the lengths of A and P, and the Payload Length
-              field in the Encrypted Payload header (denoted as AdjustedPldLen in 
-              <xref target="auth_data" />) is set to the length of P plus the size of the Payload header (four octets).
-              </t>
+            <t>For the purpose of the AUTH payload calculation the Length field in the IKE header and the Payload Length 
+            field in the Encrypted Payload header are adjusted so that they don't count the lengths
+            of Initialization Vector, Integrity Checksum Data and Padding (along with Pad Length field).
+            In other words, the Length field in the IKE header (denoted as AdjustedLen in  
+            <xref target="auth_data" /> ) is set to the sum of the lengths of A and P, and the Payload Length
+            field in the Encrypted Payload header (denoted as AdjustedPldLen in 
+            <xref target="auth_data" />) is set to the length of P plus the size of the Payload header (four octets).
+            </t>
 
-              <figure align="center">
-                <artwork align="left"><![CDATA[
+            <figure align="center">
+              <artwork align="left"><![CDATA[
 DataToAuthenticate = A | P
 GsaRekeyMessage = GenIKEHDR | EncPayload
 GenIKEHDR = [ four octets 0 if using port 4500 ] | AdjustedIKEHDR
@@ -825,13 +867,13 @@ EncPayload = AdjustedEncPldHdr | IV | InnerPlds | Pad | PadLen | ICV
 AdjustedEncPldHdr = NextPld | C | RESERVED | AdjustedPldLen
 A = AdjustedIKEHDR | AdjustedEncPldHdr
 P = InnerPlds
-              ]]></artwork>
-              </figure>
+            ]]></artwork>
+            </figure>
 
-              <figure align="center" anchor="auth_data" title="Data to Authenticate in the GSA_REKEY Messages">
-                <artwork align="left"><![CDATA[
-                     1                   2                   3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+            <figure align="center" anchor="auth_data" title="Data to Authenticate in the GSA_REKEY Messages">
+              <artwork align="left"><![CDATA[
+                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ ^
 |                     G-IKEv2 SA Initiator's SPI                | | |
 |                                                               | | |
@@ -861,317 +903,314 @@ P = InnerPlds
 ~                    Integrity Checksum Data                    ~ |
 |                                                               | |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v
-              ]]></artwork>
-              </figure>
-
-              <t>The authentication data is calculated using the authentication algorithm from the Authentication Method transform
-              and the key provided before in the AUTH_KEY attribute. Depending on the authentication method
-              the authentication data is either a digital signature or a result of applying prf from the Pseudorandom Function transform.
-              The calculated authentication data is placed into the AUTH payload, the Length fields in the IKE Header and the Encryption Payload
-              header are restored,  the content of the Encrypted payload is encrypted and the ICV is computed using the current SK_e/SK_a keys.
-              </t>
-
-              <t> The calculation of authentication data MUST be applied to whole messages only, before possible IKE Fragmentation. 
-              If the message was received in fragmented form, it should be reconstructed before verifying its authenticity as if it were received unfragmented.
-              The RESERVED field in the reconstructed Encrypted Payload header MUST be set to the value of the RESERVED 
-              field in the Encrypted Fragment payload header from the first fragment (that with Fragment Number equal to 1).
-              </t>
-            </section>
-
-            <section title="GSA_REKEY GCKS Operations">
-              <t>The GCKS builds the rekey message with a Message ID value that
-              is one greater than the value included in the previous rekey. If
-              the message is using a new KEK attribute, the Message ID is reset
-              to 0 <!-- was 1 ZZZZ --> in this message. The GSA, KD, N and D payloads follow with the
-              same characteristics as in the GSA Registration exchange. </t>
-
-              <t>The AUTH payload (if present) is created as defined in <xref target="gsa_rekey_auth" />. 
-              </t>
-
-              <t>Because GSA_REKEY messages are not acknowledged and could be
-              discarded by the network, one or more GMs may not receive the
-              message. To mitigate such lost messages, during a rekey event the
-              GCKS may transmit several GSA_REKEY messages with the new
-              policy. The retransmitted messages MUST be bitwise identical and SHOULD be
-              sent within a short time interval (a few seconds) to ensure 
-              that time-to-live would not be substantially skewed for the GMs that 
-              would receive different copies of the messages. </t>
-
-              <t> GCKS may also include one or several GSA_NEXT_SPI
-              attributes specifying SPIs for the prospected rekeys, so that
-              listening GMs are able to detect lost rekey messages and recover
-              from this situation. See Sections <xref target="gsa_attr_next_spi" /> for more detail.
-              </t>
-            </section>
-
-            <section title="GSA_REKEY GM Operations">
-              <t>When a group member receives the Rekey Message from the GCKS it
-              decrypts the message using the current KEK, validates its authenticity
-              using the key retrieved in a previous G-IKEv2 exchange if AUTH payload is present, 
-              verifies the Message ID, and processes the GSA and KD
-              payloads. The group member then downloads the new data security SA
-              and/or new rekey SA. The parsing of the payloads is identical to
-              the parsing done in the registration exchange.</t>
-
-              <t>Replay protection is achieved by a group member rejecting a
-              GSA_REKEY message which has a Message ID smaller than the current
-              Message ID that the GM is expecting. The GM expects the Message ID
-              in the first GSA_REKEY message it receives to be equal or greater
-              than the Message ID it receives in the GSA_INITIAL_MESSAGE_ID attribute.
-              Note, that if no this attribute was received for the Rekey SA, the GM 
-              MUST assume zero as the first expected Message ID.
-              The GM expects the Message ID in subsequent GSA_REKEY messages to
-              be greater than the last valid GSA_REKEY message ID it
-              received.</t>
-
-              <t>If the GSA payload includes a Data-Security SA including a
-              counter-modes of operation and the receiving group member is a
-              sender for that SA, the group member uses its current SID value
-              with the Data-Security SAs to create counter-mode nonces. If it is
-              a sender and does not hold a current SID value, it MUST NOT
-              install the Data-Security SAs. It MAY initiate a GSA_REGISTRATION
-              exchange to the GCKS in order to obtain an SID value (along with
-              current group policy).</t>
-
-              <t>Once a new Rekey SA is installed as a result of GSA_REKEY
-              message, the current Rekey SA (over which the message was received)
-              MUST be silently deleted after waiting DEACTIVATION_TIME_DELAY interval 
-              regardless of its expiration time. If the GSA TEK payload includes GSA_REKEY_SPI attribute
-              then after installing a new Data-Security SA the old one, identified
-              by the SPI in this attribute, MUST be silently deleted 
-              after waiting DEACTIVATION_TIME_DELAY interval regardless of its expiration time.
-              </t>
-
-              <t>If a Data-Security SA is not rekeyed yet and is 
-              about to expire (a "soft lifetime" expiration is described
-              in Section 4.4.2.1 of <xref target="RFC4301"></xref>), the GM SHOULD
-              initiate a registration to the GCKS. This registration serves as a
-              request for current SAs, and will result in the download of
-              replacement SAs, assuming the GCKS policy has created them.
-              A GM SHOULD also initiate a registration request if a Rekey SA
-              is about to expire and not yet replaced with a new one.</t>
-            </section>
-
-            <section title="IKE Fragmentation">
-              <t>IKE fragmentation <xref target="RFC7383"></xref> can be used to
-              perform fragmentation of large GSA_REKEY messages, however when
-              the GSA_REKEY message is emitted as an IP multicast packet there
-              is a lack of response from the GMs. This has the following
-              implications.<list style="symbols">
-
-                <t>Policy regarding the use of IKE fragmentation is implicit.
-                If a GCKS detects that all GMs have negotiated support of IKE
-                fragmentation in IKE_SA_INIT, then it MAY use IKE
-                fragmentation on large GSA_REKEY messages.</t>
-
-                <t>The GCKS must always use IKE fragmentation based on a known
-                fragmentation threshold (unspecified in this memo), as there
-                is no way to check if fragmentation is needed by first sending
-                unfragmented messages and waiting for response.</t>
-
-                <t>PMTU probing cannot be performed due to lack of GSA_REKEY
-                response message.</t>
-
-              </list></t>
-            </section>
-          </section>
-
-          <section title="GSA_INBAND_REKEY Exchange">
-            <t>When the IKEv2 SA protecting the member registration exchange is
-            maintained while group member participates in the group, the GCKS
-            can use the GSA_INBAND_REKEY exchange to individually provide policy
-            updates to the group member.</t>
-
-            <figure title="GSA_INBAND_REKEY Exchange" anchor="gsa_inband_rekey_exchange">
-              <artwork><![CDATA[
- Member (Responder)            GCKS (Initiator)
---------------------          ------------------
-                        <--    HDR, SK{GSA, KD, [N,] [D]}
-   HDR, SK{}            -->
-          ]]></artwork>
+            ]]></artwork>
             </figure>
 
-            <t>Because this is a normal IKEv2 exchange, the HDR is treated as defined
-            in <xref target="RFC7296"></xref>.</t>
-
-            <section title="GSA_INBAND_REKEY GCKS Operations">
-              <t>The GSA, KD, N and D payloads are built in the same manner as in
-              a registration exchange.</t>
-            </section>
-
-            <section title="GSA_INBAND_REKEY GM Operations">
-              <t>The GM processes the GSA, KD, N and D payloads in the same manner
-              as if they were received in a registration exchange.</t>
-            </section>
+            <t>The authentication data is calculated using the authentication algorithm from the Authentication Method transform
+            and the current authentication key provided in the AUTH_KEY attribute. Depending on the authentication method
+            the authentication data is a digital signature or a result of applying prf from the Pseudorandom Function transform.
+            The calculated authentication data is placed into the AUTH payload, the Length fields in the IKE Header and the Encryption Payload
+            header are restored, the content of the Encrypted payload is encrypted and the ICV is computed using the current KEK keys.
+            </t>
           </section>
 
-          <section title="Deletion of SAs" anchor="deletion" >
-            <t>There are occasions when the GCKS may want to signal to group
-            members to delete policy at the end of a broadcast, or if group
-            policy has changed. Deletion of SAs is accomplished by sending
-            the G-IKEv2 Delete Payload <xref target="RFC7296"></xref>, section
-            3.11 as part of the GSA_REKEY pseudo-exchange as shown below.</t>
+          <section title="IKE Fragmentation">
+            <t>IKE fragmentation <xref target="RFC7383"></xref> can be used to
+            perform fragmentation of large GSA_REKEY messages, however when
+            the GSA_REKEY message is emitted as an IP multicast packet there
+            is a lack of response from the GMs. This has the following
+            implications.
+            <list style="symbols">
+              <t>Policy regarding the use of IKE fragmentation is implicit.
+              If a GCKS detects that all GMs have negotiated support of IKE
+              fragmentation in IKE_SA_INIT, then it MAY use IKE
+              fragmentation on large GSA_REKEY messages.</t>
 
-            <t><figure title="SA Deletion in GSA_REKEY" anchor="gsa_rekey_sa_deletion">
-              <preamble></preamble>
-              <artwork><![CDATA[
- Members (Responder)        GCKS (Initiator)
---------------------       ------------------
-                      <--   HDR, SK{[GSA,] [KD,] [N,] [D,] [AUTH]}
-              ]]></artwork>
-              <postamble></postamble>
-            </figure></t>
+              <t>The GCKS must always use IKE fragmentation based on a known
+              fragmentation threshold (unspecified in this memo), as there
+              is no way to check if fragmentation is needed by first sending
+              unfragmented messages and waiting for response.</t>
 
-            <t>If GCKS has a unicast SA with group member then it can use the GSA_INBAND_REKEY
-            exchange to delete SAs.
+              <t>PMTU probing cannot be performed due to lack of GSA_REKEY
+              response message.</t>
+            </list></t>
+
+            <t> The calculation of authentication data MUST be applied to whole messages only, before possible IKE Fragmentation. 
+            If the message was received in fragmented form, it should be reconstructed before verifying its authenticity as if it were received unfragmented.
+            The RESERVED field in the reconstructed Encrypted Payload header MUST be set to the value of the RESERVED 
+            field in the Encrypted Fragment payload header from the first fragment (that with Fragment Number equal to 1).
             </t>
-            
-            <t><figure title="SA Deletion in GSA_INBAND_REKEY" anchor="gsa_inband_rekey_sa_deletion">
-              <preamble></preamble>
-              <artwork><![CDATA[
- Member (Responder)            GCKS (Initiator)
---------------------          ------------------
-                        <--    HDR, SK{[GSA,] [KD,] [N,] [D,]}
-   HDR, SK{}            -->
-              ]]></artwork>
-              <postamble></postamble>
-            </figure></t>
+          </section>
 
-            <t>The GSA MAY specify the remaining active time of the 
-            policy by using the DTD attribute in the GSA GAP. If a GCKS has no
-            further SAs to send to group members, the GSA and KD payloads MUST
-            be omitted from the message. 
-            </t>
-
-            <t>There may be circumstances where the GCKS may want to start over 
-            with a clean state, for example in case it runs out of available SIDs. 
-            The GCKS can signal deletion of all the Data-security SAs by
-            sending a Delete payload with an SPI value equal to zero.
-            For example, if the GCKS wishes to remove the Rekey SA and all the
-            Data-security SAs, the GCKS sends a Delete payload with an SPI
-            of zero and Protocol ID of AH or ESP, followed by another Delete payload
-            with a SPI of zero and Protocol ID of GIKE_REKEY. 
+          <section title="GSA_REKEY GCKS Operations">
+            <t>The GCKS builds the rekey message with a Message ID value that
+            is one greater than the value included in the previous rekey message. 
+            The first message sent over a new Rekey SA must have the Message ID 0<!-- was 1 ZZZZ -->. 
+            The GSA, KD, N and D payloads follow with the
+            same characteristics as in the GSA Registration exchange. 
+            The AUTH payload (if present) is created as defined in <xref target="gsa_rekey_auth" />. 
             </t>
 
-            <t>If a group member receives a Delete payload with zero SPI and protocol ID
-            of GIKE_REKEY either via multicast Rekey SA or via unicast SA using the GSA_INBAND_REKEY exchange, 
-            it means that the group member is excluded from the group. 
-            The group member MUST re-register if it wants to continue 
-            participating in this group. The registration is performed as described
-            in <xref target="registration" />. Note, that if the GSA_INBAND_REKEY exchange 
-            is used to exclude a group member from the group, and thus the unicast SA 
-            between the group member and the GCKS exists, then this SA persists after 
-            this exchange and the group member may use the GSA_REGISTRATION exchange 
-            to re-register.
+            <t>Because GSA_REKEY messages are not acknowledged and could be
+            discarded by the network, one or more GMs may not receive 
+            the new policy. To mitigate such lost messages, during a rekey event the
+            GCKS may transmit several GSA_REKEY messages with the new
+            policy. The retransmitted messages MUST be bitwise identical and SHOULD be
+            sent within a short time interval (a few seconds) to ensure 
+            that time-to-live would not be substantially skewed for the GMs that 
+            would receive different copies of the messages. </t>
+
+            <t> GCKS may also include one or several GSA_NEXT_SPI
+            attributes specifying SPIs for the prospected rekeys, so that
+            listening GMs are able to detect lost rekey messages and recover
+            from this situation. See Sections <xref target="gsa_attr_next_spi" /> for more detail.
             </t>
+          </section>
+
+          <section title="GSA_REKEY GM Operations">
+            <t>When a group member receives the Rekey Message from the GCKS it
+            decrypts the message using the current KEK, validates its authenticity
+            using the key retrieved in a previous G-IKEv2 exchange if AUTH payload is present, 
+            verifies the Message ID, and processes the GSA and KD
+            payloads. The group member then downloads the new Data-Security SA
+            and/or new Rekey SA. The parsing of the payloads is identical to
+            the parsing done in the registration exchange.</t>
+
+            <t>Replay protection is achieved by a group member rejecting a
+            GSA_REKEY message which has a Message ID smaller than the current
+            Message ID that the GM is expecting. The GM expects the Message ID
+            in the first GSA_REKEY message it receives to be equal or greater
+            than the Message ID it receives in the GSA_INITIAL_MESSAGE_ID attribute.
+            Note, that if no this attribute was received for the Rekey SA, the GM 
+            MUST assume zero as the first expected Message ID.
+            The GM expects the Message ID in subsequent GSA_REKEY messages to
+            be greater than the last valid GSA_REKEY message ID it
+            received.</t>
+
+            <t>If the GSA payload includes a Data-Security SA using cipher in a
+            counter-modes of operation and the receiving group member is a
+            sender for that SA, the group member uses its current SID value
+            with the Data-Security SAs to create counter-mode nonces. If it is
+            a sender and does not hold a current SID value, it MUST NOT
+            install the Data-Security SAs. It MAY initiate a GSA_REGISTRATION
+            exchange to the GCKS in order to obtain an SID value (along with
+            the current group policy).</t>
+
+            <t>Once a new Rekey SA is installed as a result of GSA_REKEY
+            message, the current Rekey SA (over which the message was received)
+            MUST be silently deleted after waiting DEACTIVATION_TIME_DELAY interval 
+            regardless of its expiration time. If the message includes Delete payload
+            for existing Data-security SA, then after installing a new Data-Security SA the old one, 
+            identified by the Protocol and SPI fields in the Delete payload, MUST be silently deleted 
+            after waiting DEACTIVATION_TIME_DELAY interval regardless of its expiration time.
+            </t>
+
+            <t>If a Data-Security SA is not rekeyed yet and is 
+            about to expire (a "soft lifetime" expiration is described
+            in Section 4.4.2.1 of <xref target="RFC4301"></xref>), the GM SHOULD
+            initiate a registration to the GCKS. This registration serves as a
+            request for current SAs, and will result in the download of
+            replacement SAs, assuming the GCKS policy has created them.
+            A GM SHOULD also initiate a registration request if a Rekey SA
+            is about to expire and not yet replaced with a new one.</t>
           </section>
         </section>
 
-        <section anchor="counter-modes" title="Counter-based modes of operation">
-          <t>Several new counter-based modes of operation have been specified
-          for ESP (e.g., AES-CTR <xref target="RFC3686"></xref>, AES-GCM <xref
-          target="RFC4106"></xref>, AES-CCM <xref target="RFC4309"></xref>,
-          ChaCha20-Poly1305 <xref target="RFC7634"></xref>,
-          AES-GMAC <xref target="RFC4543"></xref>) and AH (e.g., AES-GMAC <xref
-          target="RFC4543"></xref>). These counter-based modes require that no
-          two senders in the group ever send a packet with the same
-          Initialization Vector (IV) using the same cipher key and mode. This
-          requirement is met in G-IKEv2 when the following requirements are
-          met:
-          <list style="symbols">
+        <section title="GSA_INBAND_REKEY Exchange">
+          <t>When the IKE SA protecting the member registration exchange is
+          maintained while group member participates in the group, the GCKS
+          can use the GSA_INBAND_REKEY exchange to individually provide policy
+          updates to the group member.</t>
 
-          <t>The GCKS distributes a unique key for each Data-Security SA.</t>
+          <figure title="GSA_INBAND_REKEY Exchange" anchor="gsa_inband_rekey_exchange">
+            <artwork><![CDATA[
+Member (Responder)            GCKS (Initiator)
+--------------------          ------------------
+                      <--    HDR, SK{GSA, KD, [N,] [D]}
+ HDR, SK{}            -->
+        ]]></artwork>
+          </figure>
 
-          <t>The GCKS uses the method described in <xref target="RFC6054"></xref>, 
-          which assigns each sender a portion of the IV space by provisioning each 
-          sender with one or more unique SID values.</t>
+          <t>Because this is a normal IKEv2 exchange, the HDR is treated as defined
+          in <xref target="RFC7296"></xref>.</t>
+
+          <section title="GSA_INBAND_REKEY GCKS Operations">
+            <t>The GSA, KD, N and D payloads are built in the same manner as in
+            a registration exchange.</t>
+          </section>
+
+          <section title="GSA_INBAND_REKEY GM Operations">
+            <t>The GM processes the GSA, KD, N and D payloads in the same manner
+            as if they were received in a registration exchange.</t>
+          </section>
+        </section>
+
+        <section title="Deletion of SAs" anchor="deletion" >
+          <t>There are occasions when the GCKS may want to signal to group
+          members to delete policy at the end of a broadcast, or if group
+          policy has changed. Deletion of SAs is accomplished by sending
+          the G-IKEv2 Delete Payload <xref target="RFC7296"></xref>, section
+          3.11 as part of the GSA_REKEY pseudo-exchange as shown below.</t>
+
+          <t><figure title="SA Deletion in GSA_REKEY" anchor="gsa_rekey_sa_deletion">
+            <preamble></preamble>
+            <artwork><![CDATA[
+Members (Responder)        GCKS (Initiator)
+--------------------       ------------------
+                    <--   HDR, SK{[GSA,] [KD,] [N,] [D,] [AUTH]}
+            ]]></artwork>
+            <postamble></postamble>
+          </figure></t>
+
+          <t>If GCKS has a unicast SA with group member then it can use the GSA_INBAND_REKEY
+          exchange to delete SAs.
+          </t>
+          
+          <t><figure title="SA Deletion in GSA_INBAND_REKEY" anchor="gsa_inband_rekey_sa_deletion">
+            <preamble></preamble>
+            <artwork><![CDATA[
+Member (Responder)            GCKS (Initiator)
+--------------------          ------------------
+                      <--    HDR, SK{[GSA,] [KD,] [N,] [D,]}
+ HDR, SK{}            -->
+            ]]></artwork>
+            <postamble></postamble>
+          </figure></t>
+
+          <t>The GCKS MAY specify the remaining active time of the 
+          policy by using the GAP_DTD attribute in the GSA GAP substructure. If a GCKS has no
+          further SAs to send to group members, the GSA and KD payloads MUST
+          be omitted from the message. 
+          </t>
+
+          <t>There may be circumstances where the GCKS may want to start over 
+          with a clean state, for example in case it runs out of available SIDs. 
+          The GCKS can signal deletion of all the Data-security SAs by
+          sending a Delete payload with an SPI value equal to zero.
+          For example, if the GCKS wishes to remove the Rekey SA and all the
+          Data-security SAs, the GCKS sends a Delete payload with an SPI
+          of zero and Protocol ID of AH or ESP, followed by another Delete payload
+          with a SPI of zero and Protocol ID of GIKE_REKEY. 
+          </t>
+
+          <t>If a group member receives a Delete payload with zero SPI and protocol ID
+          of GIKE_REKEY either via multicast Rekey SA or via unicast SA using the GSA_INBAND_REKEY exchange, 
+          it means that the group member is excluded from the group. 
+          The group member MUST re-register if it wants to continue 
+          participating in this group. The registration is performed as described
+          in <xref target="registration" />. Note, that if the GSA_INBAND_REKEY exchange 
+          is used to exclude a group member from the group, and thus the unicast SA 
+          between the group member and the GCKS exists, then this SA persists after 
+          this exchange and the group member may use the GSA_REGISTRATION exchange 
+          to re-register.
+          </t>
+        </section>
+      </section>
+
+      <section anchor="counter-modes" title="Counter-based modes of operation">
+        <t>Several counter-based modes of operation have been specified
+        for ESP (e.g., AES-CTR <xref target="RFC3686"></xref>, AES-GCM <xref
+        target="RFC4106"></xref>, AES-CCM <xref target="RFC4309"></xref>,
+        ChaCha20-Poly1305 <xref target="RFC7634"></xref>,
+        AES-GMAC <xref target="RFC4543"></xref>) and AH (e.g., AES-GMAC <xref
+        target="RFC4543"></xref>). These counter-based modes require that no
+        two senders in the group ever send a packet with the same
+        Initialization Vector (IV) using the same cipher key and mode. This
+        requirement is met in G-IKEv2 when the following requirements are
+        met:
+        <list style="symbols">
+
+        <t>The GCKS distributes a unique key for each Data-Security SA.</t>
+
+        <t>The GCKS uses the method described in <xref target="RFC6054"></xref>, 
+        which assigns each sender a portion of the IV space by provisioning each 
+        sender with one or more unique SID values.</t>
+
+        </list></t>
+
+        <section title="Allocation of SIDs">
+          <t>When at least one Data-Security SA included in the group policy
+          includes a counter-based mode of operation, the GCKS automatically
+          allocates and distributes one SID to each group member acting in the
+          role of sender on the Data-Security SA. The SID value is used
+          exclusively by the group sender to which it was allocated. The group
+          sender uses the same SID for each Data-Security SA specifying the
+          use of a counter-based mode of operation. A GCKS MUST distribute
+          unique keys for each Data-Security SA including a counter-based mode
+          of operation in order to maintain unique key and nonce usage.</t>
+
+          <t>During registration, the group sender can choose to request one
+          or more SID values. Requesting a value of 1 is not necessary since
+          the GCKS will automatically allocate exactly one to the group
+          sender. A group sender MUST request as many SIDs matching the number
+          of encryption modules in which it will be installing the TEKs in the
+          outbound direction. Alternatively, a group sender MAY request more
+          than one SID and use them serially. This could be useful when it is
+          anticipated that the group sender will exhaust their range of Data-
+          Security SA nonces using a single SID too quickly (e.g., before the
+          time-based policy in the TEK expires).</t>
+
+          <t>When the group policy includes a counter-based mode of operation,
+          a GCKS SHOULD use the following method to allocate SID values, which
+          ensures that each SID will be allocated to just one group
+          sender.<list style="numbers">
+
+          <t>A GCKS maintains an SID-counter, which records the SIDs that
+          have been allocated. SIDs are allocated sequentially, with zero as
+          the first allocated SID.</t>
+
+          <t>Each time an SID is allocated, the current value of the
+          counter is saved and allocated to the group sender. The SID-counter
+          is then incremented in preparation for the next allocation.</t>
+
+          <t>When the GCKS specifies a counter-based mode of operation in
+          the Data-Security SA a group sender may request a count of SIDs
+          during registration in a Notify payload information of type SENDER.
+          When the GCKS receives this request, it increments the SID-counter
+          once for each requested SID, and distributes each SID value to the
+          group sender. The GCKS SHOULD have a policy-defined upper bound for
+          the number of SIDs that it will return irrespective of the number
+          requested by the GM.</t>
+
+          <t>A GCKS allocates new SID values for each registration operation 
+          by a group sender, regardless of whether the group
+          sender had previously contacted the GCKS. In this way, the GCKS is
+          not required to maintaining a record of which SID values it had
+          previously allocated to each group sender. More importantly, since
+          the GCKS cannot reliably detect whether the group sender had sent
+          data on the current group Data-Security SAs it does not know what
+          Data-Security counter-mode nonce values that a group sender has
+          used. By distributing new SID values, the key server ensures that
+          each time a conforming group sender installs a Data-Security SA it
+          will use a unique set of counter-based mode nonces.</t>
+
+          <t>When the SID-counter maintained by the GCKS reaches its final
+          SID value, no more SID values can be distributed. Before
+          distributing any new SID values, the GCKS MUST 
+          exclude all group members from the group as described
+          in <xref target="deletion" />. This will result in the group members 
+          performing re-registration, during which they will receive new Data-Security SAs 
+          and group senders will additionally receive new SID values.
+          The new SID values can safely be used because they are only used with
+          the new Data-Security SAs.</t>
 
           </list></t>
+        </section>
 
-          <section title="Allocation of SIDs">
-            <t>When at least one Data-Security SA included in the group policy
-            includes a counter-based mode of operation, the GCKS automatically
-            allocates and distributes one SID to each group member acting in the
-            role of sender on the Data-Security SA. The SID value is used
-            exclusively by the group sender to which it was allocated. The group
-            sender uses the same SID for each Data-Security SA specifying the
-            use of a counter-based mode of operation. A GCKS MUST distribute
-            unique keys for each Data-Security SA including a counter-based mode
-            of operation in order to maintain unique key and nonce usage.</t>
+        <section anchor="sid-usage" title="GM Usage of SIDs">
+          <t>A GM applies the SID to Data-Security SA as follows.
+          <list style="symbols">
 
-            <t>During registration, the group sender can choose to request one
-            or more SID values. Requesting a value of 1 is not necessary since
-            the GCKS will automatically allocate exactly one to the group
-            sender. A group sender MUST request as many SIDs matching the number
-            of encryption modules in which it will be installing the TEKs in the
-            outbound direction. Alternatively, a group sender MAY request more
-            than one SID and use them serially. This could be useful when it is
-            anticipated that the group sender will exhaust their range of Data-
-            Security SA nonces using a single SID too quickly (e.g., before the
-            time-based policy in the TEK expires).</t>
+          <t>The most significant bits NUMBER_OF_SID_BITS of the IV are
+          taken to be the SID field of the IV.</t>
 
-            <t>When the group policy includes a counter-based mode of operation,
-            a GCKS SHOULD use the following method to allocate SID values, which
-            ensures that each SID will be allocated to just one group
-            sender.<list style="numbers">
+          <t>The SID is placed in the least significant bits of the SID
+          field, where any unused most significant bits are set to zero.
+          If the SID value doesn't fit into the NUMBER_OF_SID_BITS bits,
+          then the GM MUST treat this as a fatal error and re-register to the group.
+          </t>
 
-            <t>A GCKS maintains an SID-counter, which records the SIDs that
-            have been allocated. SIDs are allocated sequentially, with zero as
-            the first allocated SID.</t>
-
-            <t>Each time an SID is allocated, the current value of the
-            counter is saved and allocated to the group sender. The SID-counter
-            is then incremented in preparation for the next allocation.</t>
-
-            <t>When the GCKS specifies a counter-based mode of operation in
-            the data security SA a group sender may request a count of SIDs
-            during registration in a Notify payload information of type SENDER.
-            When the GCKS receives this request, it increments the SID-counter
-            once for each requested SID, and distributes each SID value to the
-            group sender. The GCKS SHOULD have a policy-defined upper bound for
-            the number of SIDs that it will return irrespective of the number
-            requested by the GM.</t>
-
-            <t>A GCKS allocates new SID values for each registration operation 
-            by a group sender, regardless of whether the group
-            sender had previously contacted the GCKS. In this way, the GCKS is
-            not required to maintaining a record of which SID values it had
-            previously allocated to each group sender. More importantly, since
-            the GCKS cannot reliably detect whether the group sender had sent
-            data on the current group Data-Security SAs it does not know what
-            Data-Security counter-mode nonce values that a group sender has
-            used. By distributing new SID values, the key server ensures that
-            each time a conforming group sender installs a Data-Security SA it
-            will use a unique set of counter-based mode nonces.</t>
-
-            <t>When the SID-counter maintained by the GCKS reaches its final
-            SID value, no more SID values can be distributed. Before
-            distributing any new SID values, the GCKS MUST 
-            exclude all group members from the group as described
-            in <xref target="deletion" />. This will result in the group members 
-            performing re-registration, during which they will receive new Data-Security SAs 
-            and group senders will additionally receive new SID values.
-            The new SID values can safely be used because they are only used with
-            the new Data-Security SAs.</t>
-
-            </list></t>
-          </section>
-
-          <section anchor="sid-usage" title="GM Usage of SIDs">
-            <t>A GM applies the SID to data security SA as follows.
-            <list style="symbols">
-
-            <t>The most significant bits NUMBER_OF_SID_BITS of the IV are
-            taken to be the SID field of the IV.</t>
-
-            <t>The SID is placed in the least significant bits of the SID
-            field, where any unused most significant bits are set to zero.
-            If the SID value doesn't fit into the NUMBER_OF_SID_BITS bits,
-            then the GM MUST treat this as a fatal error and re-register to the group.
-            </t>
-
-            </list></t>
-          </section>
+          </list></t>
         </section>
       </section>
     </section>
@@ -1197,21 +1236,21 @@ P = InnerPlds
       policy specifies how members of the group obtain group keys. 
       This document specifies a single method for the group key management - 
       Wrapped Key Download. This method assumes that all group keys are
-      sent to the GMs by the GCKS encrypted with other keys,
+      sent to the GMs by the GCKS encrypted with some other keys,
       called Key Wrap Keys (KWK).
       </t>
 
       <section anchor="kwk" title="Key Wrap Keys">
         <t>Every GM always knows at least one KWK - the KWK that is associated with the IKE SA
-        or multicast rekey SA the wrapped keys are sent over.
-        In this document it is called default KWK and is denoted as SK_w.
+        or multicast Rekey SA the wrapped keys are sent over.
+        In this document it is called default KWK and is denoted as GSK_w.
         </t>
 
         <t>The GCKS may also send other keys to GMs that will be used as Key Wrap Keys
-        for the purpose of building key hierarchy. Each such key is associated
+        for the purpose of building key hierarchy. Each KWK is associated
         with an encryption algorithm from the Encryption Algorithm transform
-        used for the SA the key is sent in. 
-        The size of such key MUST be of the size of the key size of this Encryption Algorithm 
+        used for the SA the key is sent over. 
+        The size of a KWK MUST be of the size of the key for this Encryption Algorithm 
         transform (taking into consideration the Key Length attribute for this transform if present).
         This association persists even if the key is used later in the context of another 
         SA with possibly different Encryption Algorithm transform.
@@ -1219,27 +1258,27 @@ P = InnerPlds
 
         <t>To have an ability to provide forward access control the GCKS provides each GM 
         with a personal key at the time of registration.
-        Besides several intermediate keys that form a key 
-        hierarchy and are shared among several GMs are provided by the GCKS.
+        Besides, several intermediate keys that form a key 
+        hierarchy and are shared among several GMs may be provided by the GCKS.
         </t>
 
         <section anchor="sk_w" title="Default Key Wrap Key">
-          <t>The default KWK (SK_w) is only used in the context of a single IKE SA.
-          Every IKE SA (unicast or group rekey) will have its own SK_w.
-          The SK_w is used with the algorithm from the Encryption Algorithm 
-          transform used for the SA the SK_w is used in.
-          The size of SK_w MUST be of the key size
+          <t>The default KWK (GSK_w) is only used in the context of a single IKE SA.
+          Every IKE SA (unicast IKE SA or multicast Rekey SA) will have its own GSK_w.
+          The GSK_w is used with the algorithm from the Encryption Algorithm 
+          transform for the SA the GSK_w is used in the context of.
+          The size of GSK_w MUST be of the key size
           of this Encryption Algorithm transform (taking into consideration
           the Key Length attribute for this transform if present).
           </t>
 
           <t>For the unicast IKE SA (used for the GM registration 
-          and optionally for GSA_INBAND_REKEY exchanges)
-          the SK_w is computed as follows:
+          and for the GSA_INBAND_REKEY exchanges, if they are take place)
+          the GSK_w is computed as follows:
 
           <figure >
             <artwork><![CDATA[
-SK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
+GSK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
             ]]></artwork>
           </figure>
 
@@ -1247,22 +1286,21 @@ SK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
           without null termination.
           </t>
 
-          <t>For the multicast rekey SA the SK_w is provided along with
+          <t>For the multicast Rekey SA the GSK_w is provided along with
           other SA keys as defined in <xref target="group_sa_keys" />.
           </t>
         </section>
       </section>
 
       <section anchor="key_gcks_semantics" title="GCKS Key Management Semantics">
-        <t>Wrapped Key Download method allows the GCKS
-        to employ various key management policies.
+        <t>Wrapped Key Download method allows the GCKS to employ various key management methods
         <list style="symbols">
-          <t>A simple key management policy - when the GCKS always sends
-          group SA keys encrypted with the SK_w.  
+          <t>A simple key management methods - when the GCKS always sends
+          group SA keys encrypted with the GSK_w.  
           </t>
-          <t>An LKH key management policy - when the GCKS provides 
-          each GM with an individual key at the time of GM registration
-          (encrypted with SK_w). Then the GCKS forms an hierarchy of keys so that the group
+          <t>An LKH key management method - when the GCKS provides 
+          each GM with an individual key at the time of the GM registration
+          (encrypted with GSK_w). Then the GCKS forms an hierarchy of keys so that the group
           SA keys are encrypted with other keys which are encrypted with other keys and so on, 
           tracing back to the individual GMs' keys.
           </t>
@@ -1272,17 +1310,17 @@ SK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
 
         <section title="Forward Access Control Requirements">
           <t>When group membership is altered using a group management
-          algorithm new GSA TEKs (and their associated keys) are usually
-          also needed. New GSAs and keys ensure that members who were
+          algorithm new Data-Security SAs and their associated keys are usually
+          also needed. New Data-Security SAs and keys ensure that members who were
           denied access can no longer participate in the group.</t>
 
           <t>If forward access control is a desired property of the group,
-          new GSA TEKs and the associated key packets in the KD payload
-          MUST NOT be included in a G-IKEv2 rekey message which changes
-          group membership. This is required because the GSA TEK policy
-          and the associated key packets in the KD payload are not
-          protected with the new KEK. A second G-IKEv2 rekey message can
-          deliver the new GSA TEKS and their associated key packets
+          new TEK policy and the associated keys MUST NOT be included 
+          in a G-IKEv2 rekey message which changes group membership. 
+          This is required because the GSA TEK policy
+          and the associated keys are not protected with the new KEK. 
+          A second G-IKEv2 rekey message can
+          deliver the new GSA TEKS and their associated keys 
           because it will be protected with the new KEK, and thus will not
           be visible to the members who were denied access.</t>
 
@@ -1310,108 +1348,106 @@ SK_w = prf+(SK_d, "Key Wrap for G-IKEv2")
       <section anchor="keys_gm_semantics" title="GM Key Management Semantics">
         <t>This specification defines a GM Key Management semantics
         in such a way, that it doesn't depend on the key management
-        policy employed by the GCKS. This allows having all the complexity
+        method employed by the GCKS. This allows having all the complexity
         of key management in the GCKS, which is free to implement various
-        key management policies, such as direct transmitting of group SA
+        key management methods, such as direct transmitting of group SA
         keys or using some kind of key hierarchy (e.g. LKH). 
-        For all these policies the GMs' behavior is the same.
+        For all these policies the GM behavior is the same.
         </t>
 
-        <t>Each key is identified by a 32-bit number called Key ID.
+        <t>Each key that a GM receives in G-IKEv2 is identified by a 32-bit number called Key ID.
         Zero Key ID has a special meaning - it always contains keying material
-        from which the group SA keys are taken.
+        from which the keys for protecting Data-Security SAs and Rekey SA are taken.
         </t>
 
-        <t>All keys in G-IKEv2 are transmitted in encrypted form, which format is 
-        defined in <xref target="wrapped_key" />. This format specifies a Key ID
-        (ID of a key that is encrypted in this attribute) and a KWK ID
-        (ID of a key that was used to encrypt this attribute). Keys may be 
-        encrypted either with default KWK (SK_w) or with other keys,
-        which the GM has received in the KEY_WRAP_KEY attributes.
-        If a key was encrypted with SK_w, then the KWK ID field is set to zero,
+        <t>All keys in G-IKEv2 are transmitted in encrypted form, as specified 
+        in <xref target="wrapped_key" />. This format includes a Key ID
+        (ID of a key that is encrypted) and a KWK ID
+        (ID of a key that was used to encrypt this key). Keys may be 
+        encrypted either with default KWK (GSK_w) or with other keys,
+        which the GM has received in the WRAP_KEY attributes.
+        If a key was encrypted with GSK_w, then the KWK ID field is set to zero,
         otherwise the KWK ID field identifies the key used for encryption.
         </t>
 
-        <t>When a GM receives a message from the GCKS installing new data security or rekey SA,
-        it will contain a KD payload with a SA_KEY attribute containing keying material for this SA.
-        For a data security SA exactly one SA_KEY attribute will be present
+        <t>When a GM receives a message from the GCKS installing new Data-Security or Rekey SA,
+        it will contain a KD payload with an SA_KEY attribute containing keying material for this SA.
+        For a Data-Security SA exactly one SA_KEY attribute will be present
         with both Key ID and KWK ID fields set to zero. This means that the 
-        default KWK (SK_w) should be used to extract this keying material.
+        default KWK (GSK_w) should be used to extract this keying material.
         </t>
 
-        <t>For a multicast rekey SA multiple SA_KEY attributes may be present 
-        depending on the key management policy employed by the GCKS. If multiple SA_KEY attributes 
-        are present then all of them MUST contain the same keying material encrypted using different keys.
-        The GM in general is unaware of the GCKS's key management policy and can always use the same procedure to get 
+        <t>For a multicast Rekey SA multiple SA_KEY attributes may be present 
+        depending on the key management method employed by the GCKS. If multiple SA_KEY attributes 
+        are present then all of them MUST contain the same keying material encrypted using different KWKs.
+        The GM in general is unaware of the GCKS's key management method and can always use the same procedure to get 
         the keys. In particular, the GM's task is to find a way to decrypt at least one of the SA_KEY attributes
-        using either the SK_w or the keys from the KEY_WRAP_KEY attributes that are present in the same message  
+        using either the GSK_w or the keys from the WRAP_KEY attributes that are present in the same message  
         or were receives in previous messages.
         </t>
 
         <t>We will use the term "Key Path" to describe an ordered sequence of keys 
         where each subsequent key was used to encrypt the previous one.
-        The GM keeps its own Key Path (called working Key Path) in the memory associated
-        with each group it is registered to and update it when needed.
+        The GM keeps its own Key Path (called Working Key Path) in the memory associated
+        with each group it is registered to and updates it when needed.
         When the GSA_REKEY message is received the GM processes the received SA_KEY attributes 
         one by one trying to construct a new key path that starts from this attributes and 
-        ends with any key in the working Key Path or with the default KWK (SK_w). 
+        ends with any key in the Working Key Path or with the default KWK (GSK_w). 
         </t>
 
         <t>In the simplest case the SA_KEY attribute is encrypted
-        with SK_w so that the new Key Path is empty. 
-        If more complex key management policies are used then the Key Path will
-        contain intermediate keys, which will be from the KEY_WRAP_KEY attributes
-        received in the same messages. If the GM is able to construct a new Key Path,
-        then it is able to decrypt the SA_KEY attribute and use its content to form the SA keys.
-        If it is unable to build a new Key Path, then in means that the GM is excluded
+        with GSK_w so that the new Key Path is empty. 
+        If more complex key management methods are used then a Key Path will
+        contain intermediate keys from the WRAP_KEY attributes
+        received by a GM so far starting from its registration to the group. If the GM is able 
+        to construct a new Key Path using intermediate keys it has, then it is able to decrypt the SA_KEY attribute 
+        and use its content to form new SA keys. If it is unable to build a new Key Path, then in means that the GM is excluded
         from the group.
         </t>
 
         <t>Depending on the new Key Path the GM should do the following actions to be prepared for future key updates:
         <list style="symbols">
           <t>If the new Key Path is empty then no actions are needed. This may happen 
-          if no KEY_WRAP_KEY attributes from the received message were used.
+          if no WRAP_KEY attributes from the received message were used.
           </t>
-          <t>If the new Key Path is non-empty and it ends up with the default KWK (SK_w), then the whole new 
-          Key Path is stored by the GM as the GM's working Key Path.
+          <t>If the new Key Path is non-empty and it ends with the default KWK (GSK_w), then the whole new 
+          Key Path is stored by the GM as the GM's Working Key Path.
           This situation may only happen at the time the GM is registering to the group,
           when the GCKS is providing it with its personal key and the other keys from the key tree that are needed for this GM.
-          These keys form an initial working Key Path.
+          These keys form an initial Working Key Path for this GM.
           </t>
-          <t>In all other cases the new Key Path will end up where some key from the GM's working Key Path was used. 
-          In this case the new Key Path replaces the part of the GM's working Key Path from the beginning and up to (but not including) 
+          <t>In all other cases the new Key Path will end at some intermediate key from the GM's current Working Key Path. 
+          In this case the new Key Path is constructed by replacing a part of the GM's current Working Key Path from the beginning and up to (but not including) 
           the key that the GM has used to decrypt the last key in the new Key Path.
           </t>
         </list>
-        <xref target="lkh_key_management" /> contains an example of how this algorithm works in case of LKH
-        key management policy.
+        <xref target="lkh_key_management" /> contains an example of how this algorithm works in case of LKH key management method.
         </t>
       </section>
 
-      <section anchor="group_sa_keys" title="Group SA Keys">
-        <t>Group SA keys are downloaded to GMs in the form of keying material. The keys are taken
-        from this keying material as if they were concatenated to form it.
+      <section anchor="group_sa_keys" title="SA Keys">
+        <t>Keys used for Data-Security SAs or Rekey SA (called here SA keys) are downloaded to GMs in the form of keying material. 
+        The keys for each algorithm employed in an SA are taken from this keying material as if they were concatenated to form it.
         </t>
 
-        <t>For a data security SA the keys are taken in accordance to the third bullet from Section 2.17 of 
+        <t>For a Data-Security SA the keys are taken in accordance to the third bullet from Section 2.17 of 
         <xref target="RFC7296" />. In particular, for the ESP and AH SAs the encryption key (if any) MUST be
         taken from the first bits of the keying material and the integrity key (if any) MUST be
         taken from the remaining bits.
         </t>
 
-        <t>For a group rekey SA the following keys are taken from the keying material:
+        <t>For a Rekey SA the following keys are taken from the keying material:
 
         <figure >
           <artwork><![CDATA[
-SK_e | SK_a | SK_w = KEYMAT
+GSK_e | GSK_a | GSK_w = KEYMAT
           ]]></artwork>
         </figure>
 
-        where SK_e and SK_a are the keys used for the Encryption Algorithm and the Integrity Algorithm transforms
-        for the corresponding SA and SK_w is a default KWK for this SA. Note, that SK_w is also used with 
-        the Encryption Algorithm transform as well as SK_e. Note also, that if AEAD
-        algorithm is used for encryption, then SK_a key will not be used (GM can use
-        the formula above assuming the length of SK_a is zero).
+        where GSK_e and GSK_a are the keys used for the Encryption Algorithm and the Integrity Algorithm transforms
+        for the corresponding SA and GSK_w is a default KWK for this SA. Note, that GSK_w is also used with 
+        the Encryption Algorithm transform as well as GSK_e. If an AEAD algorithm is used for encryption, 
+        then SK_a key will not be used (GM can use the formula above assuming the length of SK_a is zero).
         </t>
       </section>
     </section>
@@ -1458,7 +1494,7 @@ SK_e | SK_a | SK_w = KEYMAT
 
       <section anchor="gsa_payload" title="Group Security Association Payload">
         <t>The Group Security Association (GSA) payload is used by the GCKS to
-        assert security attributes for both Rekey and Data-security SAs.
+        assert security attributes for both Rekey SA and Data-security SAs.
         The Payload Type for the Group Security Association payload is fifty-one (51).
         </t>
     
@@ -1493,17 +1529,17 @@ SK_e | SK_a | SK_w = KEYMAT
           and Group Associated (GA) policy. GSA policy defines parameters 
           for the Security Association for the group. Depending on the 
           employed security protocol GSA policies may further be classified as
-          rekeying SA policy (GSA KEK) and data traffic SA policy (GSA TEK).
+          Rekey SA policy (GSA KEK) and Data-Security SA policy (GSA TEK).
           GSA payload may contain zero or one GSA KEK policy, zero or more GSA TEK policies, 
           and zero or one GA policy, where either one GSA KEK or GSA TEK policy MUST be present.</t>
 
           <t>This latitude allows various group policies to be accommodated.
           For example if the group policy does not require the use of a Rekey
           SA, the GCKS would not need to send a GSA KEK policy to the group
-          member since all SA updates would be performed using the
-          Registration SA. Alternatively, group policy might use a Rekey SA
+          member since all SA updates would be performed using the GSA_INBAND_REKEY exchange via the 
+          unicast IKE SA. Alternatively, group policy might use a Rekey SA
           but choose to download a KEK to the group member only as part of the
-          Registration SA. Therefore, the GSA KEK policy would not be
+          unicast IKE SA. Therefore, the GSA KEK policy would not be
           necessary as part of the GSA_REKEY message.</t>
 
           <t>Specifying multiple GSA TEKs allows multiple related data streams
@@ -1517,7 +1553,7 @@ SK_e | SK_a | SK_w = KEYMAT
           The format of the substructures is defined below in <xref target="gsa_policy" />
           (for GSA policy) and in <xref target="ga_policy" /> (for GA policy).
           The first octet of the substructure unambiguously determines its type - 
-          it is zero for GAP and non-zero (actually, it is the security protocol ID)
+          it is zero for GAP and non-zero (actually, it is a security protocol ID)
           for GSA policies.
           </t>
         </section>
@@ -1525,7 +1561,7 @@ SK_e | SK_a | SK_w = KEYMAT
         <section title="Group Security Association Policy Substructure" anchor="gsa_policy">
           <t>The GSA policy substructure contains parameters for the SA
           used with this group. Depending on the security protocol 
-          the SA is either a rekey SA or a data security SA (ESP and AH).
+          the SA is either a Rekey SA or a Data-Security SA (ESP and AH).
           It is NOT RECOMMENDED that the GCKS distribute both ESP and AH
           policies for the same set of Traffic Selectors.
           </t>
@@ -1568,10 +1604,10 @@ SK_e | SK_a | SK_w = KEYMAT
             <t>Protocol (1 octet) - Identifies the security protocol for this group SA.
             The values are defined in the IKEv2 Security Protocol Identifiers in 
             <xref target="IKEV2-IANA" />. The valid values for this field are:
-            &lt;TBA&gt; (GIKE_REKEY) for GSA KEK policy and 2 (AH) or 3 (ESP) for GSA TEK policy.
+            &lt;TBA&gt; (GIKE_REKEY) for Rekey SA and 2 (AH) or 3 (ESP) for Data-Security SAs.
             </t>
 
-            <t>SPI Size (1 octet) - Size of Security Parameter Index (SPI) for the group SA.
+            <t>SPI Size (1 octet) - Size of Security Parameter Index (SPI) for the SA.
             SPI size depends on the SA protocol. For GIKE_REKEY it is 16 octets, while for AH and ESP it is 4 octets.
             </t>
 
@@ -1594,16 +1630,18 @@ SK_e | SK_a | SK_w = KEYMAT
             network identities. The format for these substructures 
             is defined in IKEv2 <xref target="RFC7296"></xref>, section 3.13.1. 
             <!-- <xref target="trsel" />. --> 
-            For the group rekey SA (protocol GIKE_REKEY) the
-            destination traffic selectors MUST define a single IP address, IP protocol and port the GSA_REKEY
+            For the Rekey SA (with protocol GIKE_REKEY) the
+            destination traffic selectors MUST define a single multicast IP address, IP protocol and port the GSA_REKEY
             messages will be destined to. The source traffic selector in this case MUST either define
             a single IP address, IP protocol and port the GSA_REKEY messages will be originated from
-            or be a wildcard selector. For the data security (AH and ESP) SAs the traffic selectors instead specify
-            characteristics of the traffic to be protected by the corresponding SA. 
+            or be a wildcard selector. For the Data-Security (AH and ESP) SAs the 
+            destination traffic selectors SHOULD define a single multicast IP address. 
+            The source traffic selector in this case SHOULD define a single IP address or be a wildcard selector.
+            IP protocol and ports define the characteristics of traffic protected by this Data-Security SA.
             </t>
 
             <t>GSA Transforms (variable) - A list of Transform
-            Substructures specifies the policy information for the group SA. 
+            Substructures specifies the policy information for the SA. 
             The format is defined in IKEv2 <xref target="RFC7296"></xref>, section 3.3.2.
             The Last Substruc value in each Transform Substructure
             will be set to 3 except for the last one in the list, which is
@@ -1614,8 +1652,8 @@ SK_e | SK_a | SK_w = KEYMAT
             <t>GSA Attributes (variable) - Contains policy attributes associated
             with the group SA. The following sections describe the possible
             attributes. Any or all attributes may be optional, depending on
-            the group SA protocol and the group policy. <xref target="gsa_attr" />
-            defines attributes used in GSA policy.</t>
+            the protocol and the group policy. <xref target="gsa_attr" />
+            defines attributes used in GSA policy substructure.</t>
           </list></t>
 
 <!--
@@ -1653,41 +1691,45 @@ SK_e | SK_a | SK_w = KEYMAT
 -->
 
           <section anchor="gsa_transforms" title="GSA Transforms">
-            <t>GSA policy is defined by means of transforms in GSA policy substructure.
+            <t>GSA policy is defined by means of transforms in the GSA policy substructure.
             For this purpose the transforms defined in <xref target="RFC7296" />
             are used. In addition, new transform types are defined for using in G-IKEv2:
             Authentication Method (AUTH)<!-- XXXX , Encapsulation Mode (MODE) --> 
             and Group Key Management Method (GKM), see <xref target="IANA" />.
             </t>
 
-            <t> Valid Transform Types depend on group SA protocol and are summarized in the table below.
+            <t> Valid Transform Types depend on the SA protocol and are summarized in the table below.
 
             <figure align="center" anchor="allowed_transforms" title="Valid Transform Types">
               <artwork align="left"><![CDATA[
-Protocol    Mandatory Types                 Optional Types
-----------------------------------------------------------
-GIKE_REKEY  ENCR, INTEG*, PRF, AUTH, GKM
-ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                           INTEG, ESN
-AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                           ESN
+Protocol    Mandatory Types                   Optional Types
+------------------------------------------------------------
+GIKE_REKEY  ENCR, INTEG*, PRF, AUTH**, GKM**
+ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                             INTEG, ESN
+AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                             ESN
               ]]></artwork>
             </figure>
 
-            (*) If AEAD encryption algorithm is used, then INTEG transform
+            </t>
+            <t>(*) If AEAD encryption algorithm is used, then INTEG transform
             MUST NOT be specified, otherwise it MUST be specified.
+            </t>
+            <t>(**) May only appear at the time of a GM registration, 
+            (in the GSA_aUTH and GSA_REGISTRATION exchanges).
             </t>
 
             <section anchor="auth_method" title="Authentication Method Transform">
               <t>The Authentication Method (AUTH) transform is used in the GIKE_REKEY
               policy to convey information of how GCKS will authenticate the GSA_REKEY messages.
               This values are from the IKEv2 Authentication Method registry <xref target="IKEV2-IANA"></xref>.
-              Note, that this registry defines only 256 possible values, so even that Transform ID field
+              Note, that this registry defines only values in a range 0-255, so even that Transform ID field
               in the Transform substructure allows for 65536 possible values, in case of 
-              the Authentication Method transform the values 257-65535 MUST NOT be used.
+              the Authentication Method transform the values 256-65535 MUST NOT appear.
               </t>
 
               <t>Among the currently defined authentication methods in the IKEv2 Authentication Method registry,
-              only the following are allowed to be used in the Authentication Method transform: Shared Key Message Integrity Code,
-              NULL Authentication and  Digital Signature. Other currently defined authentication methods MUST NOT be used.
+              only the following are allowed to be used in the Authentication Method transform: Shared Key Message Integrity Code, 
+              NULL Authentication and Digital Signature. Other currently defined authentication methods MUST NOT be used.
               The following semantics is associated with each of the allowed methods.
               <list style="hanging">
                 <t>Shared Key Message Integrity Code - GCKS will authenticates the GSA_REKEY 
@@ -1695,8 +1737,9 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                   
                 containing the shared key into the KD payload at the time the GM is registered to the group.
                 </t>
                 <t>NULL Authentication - No additional authentication of the GSA_REKEY messages 
-                will be provided by the GCKS (besides the ability for the GMs to correctly decrypt them and verify their ICV).
-                In this case the GCKS MUST NOT include the AUTH_KEY attribute into the KD payload.
+                will be provided by the GCKS besides the ability for the GMs to correctly decrypt them and verify their ICV.
+                In this case the GCKS MUST NOT include the AUTH_KEY attribute into the KD payload. Additionally, the AUTH payload 
+                MUST NOT be included in the GIKE_REKEY messages.
                 </t>
                 <t>Digital Signature - Digital signatures will be used by the GCKS to authenticate the GSA_REKEY messages.
                 In this case the GCKS MUST include the AUTH_KEY attribute containing the public key 
@@ -1710,7 +1753,12 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                   
                 in the Authentication Method transform.
                 </t>
               </list>
-              The type of the Authentication Method Transform is &lt;TBA by IANA&gt;.
+              The authentication method MUST NOT change as a result of rekey operations.
+              This means that the Authentication Method transform may not appear in the rekey
+              messages, it may only appear in the registration exchange (either GSA_AUTH or GSA_REGISTRATION).
+              </t>
+
+              <t>The type of the Authentication Method Transform is &lt;TBA by IANA&gt;.
               </t>
             </section>
 
@@ -1728,8 +1776,14 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                   
                 key at the time of registration. Otherwise no access control is provided.
                 </t>
               </list>
-              The type of the Group Key Management Method transform is &lt;TBA by IANA&gt;.
+              The group key management method MUST NOT change as a result of rekey operations.
+              This means that the Group Key Management Method transform may not appear in the rekey
+              messages, it may only appear in the registration exchange (either GSA_AUTH or GSA_REGISTRATION).
               </t>
+
+              <t>The type of the Group Key Management Method transform is &lt;TBA by IANA&gt;.
+              </t>
+
             </section>
 
             <!-- XXXX
@@ -1754,11 +1808,11 @@ XXXX -->
               <t>Extended Sequence Number (ESN) Transform is defined in <xref target="RFC7296" /> 
               to allow using 64-bit sequence numbers in ESP and AH. Since both AH <xref target="RFC4302" />
               and ESP <xref target="RFC4303" /> are defined so, that high-order 32 bits of extended sequence
-              numbers are never transferred on the wire, it makes using ESN in multicast data security SAs
+              numbers are never transmitted, it makes using ESN in multicast Data-Security SAs
               problematic, because GMs that join group long after it is created will have to somehow learn the current high order 32 bits
               of ESN for each sender in the group. The algorithm for doing this described in <xref target="RFC4302" />
               and <xref target="RFC4303" /> is resource-consuming. For this reason
-              extended sequence numbers SHOULD NOT <!-- MUST NOT? --> be used for multicast data security SAs
+              extended sequence numbers SHOULD NOT <!-- MUST NOT? --> be used for multicast Data-Security SAs
               and thus the ESN Transform SHOULD NOT <!-- MUST NOT? --> be included in the GSA Payload.
               </t>
             </section>
@@ -1779,12 +1833,12 @@ XXXX -->
 
             <figure>
               <artwork align="center"><![CDATA[
-GSA Attributes          Value  Type   Multiple  Used In
+GSA Attributes            Value  Type   Multiple  Protocol
 ---------------------------------------------------------------------
-Reserved                0
-GSA_KEY_LIFETIME        1      V      N         (GIKE_REKEY, AH, ESP)
-GSA_INITIAL_MESSAGE_ID  2      V      N         (GIKE_REKEY)
-GSA_NEXT_SPI            3      V      Y         (GIKE_REKEY, AH, ESP)
+Reserved                  0
+GSA_KEY_LIFETIME          1      V      N         GIKE_REKEY, AH, ESP
+GSA_INITIAL_MESSAGE_ID    2      V      N         GIKE_REKEY
+GSA_NEXT_SPI              3      V      Y         GIKE_REKEY, AH, ESP
               ]]></artwork>
             </figure>
 
@@ -1795,52 +1849,60 @@ GSA_NEXT_SPI            3      V      Y         (GIKE_REKEY, AH, ESP)
             </t>
 
             <section anchor="gsa_attr_key_lifetime" title="GSA_KEY_LIFETIME Attribute">
-              <t>The GSA_KEY_LIFETIME attribute specifies the maximum time for
-              which the group SA is valid. The value is a 4 octet number defining a valid time period in seconds.
+              <t>The GSA_KEY_LIFETIME attribute (1) specifies the maximum time for
+              which the SA is valid. The value is a 4 octet unsigned integer in a network byte order, specifying a valid time period in seconds.
               A single attribute of this type MUST be included into any GSA policy substructure.
               </t>
 
               <t>When the lifetime expires, the group security association and all associated keys MUST be deleted. 
-              The GCKS may delete the SA at any time before the end of the valid period. 
+              The GCKS may delete the SA at any time before the end of the validity period. 
+              </t>
+
+              <t>This attribute SHOULD NOT be used if inband rekeying (via the GSA_INBAND_REKEY exchange) is employed by the GCKS for the GM.
               </t>
             </section>
 
             <section anchor="gsa_attr_initial_message_id" title="GSA_INITIAL_MESSAGE_ID Attribute">
-              <t>The GSA_INITIAL_MESSAGE_ID attribute defines the initial Message ID
+              <t>The GSA_INITIAL_MESSAGE_ID attribute (2) defines the initial Message ID
               to be used by the GCKS in the GSA_REKEY messages. The Message ID
               is a 4 octet unsigned integer in network byte order. 
               </t>
 
               <t>A single attribute of this type MUST be included into 
-              the GSA KEK policy substructure if the initial Message ID is non-zero.
+              the GSA KEK policy substructure if the initial Message ID of the Rekey SA is non-zero.
               Note, that it is always the case if GMs join the group after some multicast rekey operations
               have already taken place, so in these cases this attribute will be included into
               the GSA policy at the time of GMs' registration.
               </t>
+
+              <t>This attribute MUST NOT be used if inband rekeying (via the GSA_INBAND_REKEY exchange) is employed by the GCKS for the GM.
+              </t>
             </section>
 
             <section anchor="gsa_attr_next_spi" title="GSA_NEXT_SPI Attribute">
-              <t>The optional GSA_NEXT_SPI attribute contains SPI that the GCKS reserved  
-              for the next group SA replacing this group SA. The length of the attribute data
+              <t>The optional GSA_NEXT_SPI attribute (3) contains SPI that the GCKS reserved  
+              for the next Rekey SA or Data-Security SAs replacing the current ones. The length of the attribute data
               is determined by the SPI Size field in the GSA Policy substructure the attribute
               resides in (see <xref target="gsa_policy" />), and the attribute data contains 
               SPI as it would appear on the network. Multiple attributes of this type MAY be included,
               meaning that any of the supplied SPIs can be used in the replacement group SA.
               </t>
 
-              <t> The GM may store these values and if later the GM starts receiving 
-              group SA messages with one of these SPIs without seeing a rekey message over the current rekey SA,
+              <t>The GM MAY store these values and if later the GM starts receiving 
+              messages with one of these SPIs without seeing a rekey message over the current Rekey SA,
               this may be used as an indication, that the rekey message got lost on its way to this GM.
               In this case the GM SHOULD re-register to the group.
               </t>
 
-              <t> Note, that this method of detecting lost rekey messages can only be used 
-              by passive GMs, i.e. those, that only listen and don't send data.
-              There is also no point to include this attribute in the GSA_INBAND_REKEY messages,
+              <t>Note, that this method of detecting lost rekey messages can only be used 
+              by group receivers. Additionally there is no point to include this attribute in the GSA_INBAND_REKEY messages,
               since they use reliable transport. Note also, that the GCKS is free 
               to forget its promises and not to use the SPIs it sent in the GSA_NEXT_SPI 
-              attributes before (e.g. in case of the GCKS reboot), so the GM must only treat
-              these information as a "best effort" made by GCKS to prepare for future rekeys.
+              attributes before (e.g. in case of the GCKS is rebooted), so the GM must only treat
+              these information as a "best effort" made by the GCKS to prepare for future rekeys.
+              </t>
+
+              <t>This attribute MUST NOT be used if inband rekeying (via the GSA_INBAND_REKEY exchange) is employed by the GCKS for the GM.
               </t>
             </section>
           </section>
@@ -1858,7 +1920,7 @@ GSA_NEXT_SPI            3      V      Y         (GIKE_REKEY, AH, ESP)
                      1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            ZERO               |            Length             |
+|    Protocol   |   RESERVED    |            Length             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 ~                        <GAP Attributes>                       ~
@@ -1871,13 +1933,19 @@ GSA_NEXT_SPI            3      V      Y         (GIKE_REKEY, AH, ESP)
           <t>The GAP substructure fields are defined as follows:</t>
 
           <t><list style="symbols">
-            <t>ZERO (2 octets) - MUST be zero.</t>
+            <t>Protocol (1 octet) - MUST be zero. This value is reserved in <xref target="IANA" /> and is never
+            used for any security protocol, so it is used here to indicate that this substructure contains policy
+            not related to any specific protocol.
+            </t>
+
+            <t>RESERVED ( octet) - MUST be zero on transmission, MUST be ignored on receipt.
+            </t>
 
             <t>Length (2 octets, unsigned integer) - Length of this substructure including the header.
             </t>
 
             <t>GAP Attributes (variable) - Contains policy attributes associated
-            with no specific SA. The following sections describe the possible
+            with no specific SA. The following sections describe possible
             attributes. Any or all attributes may be optional, depending on
             the group policy.</t>
           </list></t>
@@ -1896,8 +1964,9 @@ GAP_DTD                     2       B       N
 GAP_SID_BITS                3       B       N
             ]]></artwork>
           </figure>
+          </t>
 
-          The attributes must follow the format defined in the IKEv2 <xref
+          <t>The attributes must follow the format defined in the IKEv2 <xref
           target="RFC7296"></xref> section 3.3.5. In the table, attributes
           that are defined as TV are marked as Basic (B); attributes that
           are defined as TLV are marked as Variable (V).
@@ -1909,17 +1978,17 @@ GAP_SID_BITS                3       B       N
             Deactivation Time Delay (DTD).
             </t>
 
-            <t>The GAP_ATD attribute allows a GCKS to set the
-            Activation Time Delay for data security SAs of the group. The ATD
+            <t>The GAP_ATD attribute (1) allows a GCKS to set the
+            Activation Time Delay for Data-Security SAs of the group. The ATD
             defines how long active members of the group (those who sends traffic) 
             should wait after receiving new SAs before staring sending traffic over them.
             Note, that to achieve smooth rollover passive members of the group should
             activate the SAs immediately once they receive them.
             </t>
 
-            <t>The GAP_DTD attribute allows the GCKS to set the
+            <t>The GAP_DTD attribute (2) allows the GCKS to set the
             Deactivation Time Delay for previously distributed SAs. The
-            DTD defines how long after receiving a request to delete data security SAs
+            DTD defines how long after receiving a request to delete Data-Security SAs
             passive group members should wait before actually deleting them.
             Note that active members of the group should stop sending traffic over these old SAs
             once new replacement SAs are activated (after time specified in the GAP_ATD attribute).
@@ -1933,7 +2002,7 @@ GAP_SID_BITS                3       B       N
           </section>
 
           <section anchor="gap_attr_sid_bits" title="GAP_SID_BITS Attribute">
-            <t>The GAP_SID_BITS attribute declares how many bits of the
+            <t>The GAP_SID_BITS attribute (3) declares how many bits of the
             cipher nonce are taken to represent an SID value. The bits are
             applied as the most significant bits of the IV, as shown in Figure
             1 of <xref target="RFC6054"></xref> and specified in <xref
@@ -1943,7 +2012,7 @@ GAP_SID_BITS                3       B       N
             distributed in the KD payload.</t>
 
             <t>The GCKS MUST include this attribute if there are more than one sender
-            in the group and any of the data security SAs use counter-based 
+            in the group and any of the Data-Security SAs use counter-based 
             cipher mode. The number of SID bits is represented as 16 bit unsigned integer in 
             network byte order.
             </t>
@@ -1952,7 +2021,7 @@ GAP_SID_BITS                3       B       N
       </section>
 
       <section anchor="KD" title="Key Download Payload">
-        <t>The Key Download (KD) payload contains the group keys for the group
+        <t>The Key Download (KD) payload contains the group keys for the SAs
         specified in the GSA Payload.
         The Payload Type for the Key Download payload is fifty-two (52).
         </t>
@@ -1980,7 +2049,7 @@ GAP_SID_BITS                3       B       N
          are defined in Section 3.2. of <xref target="RFC7296"></xref>.</t>
 
           <t>Key Packets (variable) - Contains Group Key Packet and Member Key Packet substructures. Each Key Packet contains 
-          keys for a single group rekey or data security SA or a keys and security parameters for a GM.
+          keys for a single group rekey or Data-Security SA or a keys and security parameters for a GM.
           </t>
         </list>
 
@@ -1997,9 +2066,9 @@ GAP_SID_BITS                3       B       N
           encrypt the message the keys are sent in. It means, that in case of unicast
           IKE SA (used for GMs registration and rekeying using GSA_INBAND_REKEY)
           the encryption algorithm will be the one negotiated during the 
-          SA establishment, while for the GSA_REKEY messages the algorithm will be provided
+          IKE SA establishment, while for a GSA_REKEY message the algorithm will be provided
           by the GCKS in the Encryption Algorithm transform in the GSA payload
-          when this multicast SA was being established (not in the same GSA_REKEY message).
+          when this multicast SA was being established.
           </t>
 
           <t>If AEAD mode is used for encryption, then for the purpose
@@ -2044,12 +2113,12 @@ GAP_SID_BITS                3       B       N
 
           <t><list style="symbols">
              <t>Key ID (4 octets) - ID of the encrypted key. The value zero means that the encrypted key
-             contains keying material for the group SA, otherwise it contains some intermediate key.</t>
-             <t>Key Wrap Key (KWK) ID (4 octets) - ID of the key that was used to encrypt this key.
-             The value zero means that the default KWK was used to encrypt the key, otherwise some other 
+             contains SA keys (in the form of keying material, see <xref target="group_sa_keys" />)), otherwise it contains some intermediate key.</t>
+             <t>KWK ID (4 octets) - ID of the key that was used to encrypt key with specified Key ID.
+             The value zero means that the default KWK was used to encrypt the key, otherwise some intermediate 
              key was used.</t>
              <t>IV (variable) - Initialization Vector used for encryption. The size and the content of IV is defined
-             by the encryption algorithm employed.</t>
+             by the employed encryption transform.</t>
              <t>Encrypted Key (variable) - The encrypted key bits. These bits may comprise either a single
              encrypted key or a result of encryption of a concatenation of keys (key material) for several algorithms.</t>
             </list>
@@ -2058,7 +2127,7 @@ GAP_SID_BITS                3       B       N
 
         <section anchor="group_key_packet" title="Group Key Packet Substructure">
           <t>Group Key Packet substructure contains SA key information. This key information is associated 
-          with some group SAs: either with data security SAs or with group rekey SA.
+          with some group SAs: either with Data-Security SAs or with group Rekey SA.
           </t>
 
           <figure title="Group Key Packet Substructure Format" anchor="group_key_packet_format">
@@ -2074,7 +2143,7 @@ GAP_SID_BITS                3       B       N
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-~               <Group Key Download Attributes>                 ~
+~                <Group Key Packet Attributes>                  ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
               ]]></artwork>
@@ -2105,56 +2174,63 @@ GAP_SID_BITS                3       B       N
             field in the IKEv2 header) uniquely identify the Rekey SA.
             </t>
 
-            <t>Group Key Download Attributes (variable length) - Contains Key
+            <t>Group Key Packet Attributes (variable length) - Contains Key
             information for the corresponding SA.
             </t>
           </list>
           </t>
 
           <t>This document creates a new IKEv2 IANA registry for the types
-          of the Group Key Download attributes which is initially filled as described in <xref target="IANA" />.
+          of the Group Key Packet attributes which is initially filled as described in <xref target="IANA" />.
           In particular, the following attributes are initially added.
 
           <figure>
             <artwork align="center"><![CDATA[
-GKD Attributes      Value   Type    Multiple    Used In
-------------------------------------------------------------
+Group Key Packet
+Attributes          Value   Type    Multiple    Protocol
+----------------------------------------------------------
 Reserved            0
-SA_KEY              1       V       Y           (GIKE_REKEY)
-                                    N           (AH, ESP)
+SA_KEY              1       V       N/Y*        GIKE_REKEY,
+                                    N           AH, ESP
           ]]></artwork>
           </figure>
 
-          The attributes must follow the format defined in the IKEv2 <xref
+          (*) Multiple SA_KEY attributes may only appear for the GIKE_REKEY protocol
+          in the GSA_REKEY exchange if the GCKS uses the Group Key Management
+          method that allows excluding GMs from the group (like LKH).
+          </t>
+
+          <t>The attributes must follow the format defined in the IKEv2 <xref
           target="RFC7296"></xref> section 3.3.5. In the table, attributes
           that are defined as TV are marked as Basic (B); attributes that
           are defined as TLV are marked as Variable (V).
           </t>
 
           <section anchor="gkd_attr_group_key" title="SA_KEY Attribute">
-            <t>The SA_KEY attribute contains a keying material
-            for the corresponding SA. The content of the attribute is formatted according to 
-            <xref target="wrapped_key" /> with a precondition that the Key ID field MUST be zero.
+            <t>The SA_KEY attribute (1) contains a keying material for the corresponding SA. 
+            The content of the attribute is formatted according to 
+            <xref target="wrapped_key" /> with a precondition that the Key ID field MUST always be zero.
             The size of the keying material MUST be equal to the total size of the keys needed to be taken
             from this keying material (see <xref target="group_sa_keys" />) for the corresponding SA.
             </t>
 
-            <t>If the Key Packet is for a data security SA (AH or ESP protocols), 
+            <t>If the Key Packet is for a Data-Security SA (AH or ESP protocols), 
             then exactly one SA_KEY attribute MUST be present with both
             Key ID and KWK ID fields set to zero.
             </t>
 
-            <t>If the Key Packet is for a rekey SA (GIKE_REKEY protocol), 
-            then at least one SA_KEY attribute with zero Key ID MUST be present.
-            Depending on GCKS key management policy more 
-            SA_KEY attributes MAY be present.
+            <t>If the Key Packet is for a Rekey SA (GIKE_REKEY protocol), 
+            then in the GSA_AUTH, GSA_REGISTRATION and GSA_INBAND_REKEY exchanges 
+            exactly one SA_KEY attribute<!-- with zero Key ID--> MUST be present.
+            In the GSA_REKEY exchange at least one SA_KEY attribute MUST be present, 
+            and more attributes MAY be present (depending on the key management method employed by the GCKS).
             </t>
           </section>
         </section>
 
         <section anchor="member_key_packet" title="Member Key Packet Substructure" >
           <t>The Member Key Packet substructure contains keys and other
-          parameters that are specific for the member of the group and are not
+          parameters that are specific for a member of the group and are not
           associated with any particular group SA.
           </t>
 
@@ -2164,10 +2240,10 @@ SA_KEY              1       V       Y           (GIKE_REKEY)
                      1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|             ZERO              |            Length             |
+|    Protocol   |   RESERVED    |            Length             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-~                 <Member Key Download Attributes>              ~
+~                  <Member Key Packet Attributes>               ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
              ]]></artwork>
@@ -2177,12 +2253,18 @@ SA_KEY              1       V       Y           (GIKE_REKEY)
           <t>The Member Key Packet substructure fields are defined as follows:</t>
 
           <t><list style="symbols">
-            <t>ZERO (2 octets) - MUST be zero.</t>
+             <t>Protocol (1 octet) - MUST be zero. This value is reserved in <xref target="IANA" /> and is never
+             used for any security protocol, so it is used here to indicate that this Key Packet is not associated
+             with any particular SA.
+             </t>
+
+             <t>RESERVED ( octet) - MUST be zero on transmission, MUST be ignored on receipt.
+             </t>
 
             <t>Length (2 octets, unsigned integer) - Length of this substructure including the header.
             </t>
 
-            <t>Member Key Download Attributes (variable length) - Contains Key
+            <t>Member Key Packet Attributes (variable length) - Contains Key
             information and other parameters exclusively for a particular member of the group.
             </t>
           </list>
@@ -2193,65 +2275,52 @@ SA_KEY              1       V       Y           (GIKE_REKEY)
           </t>
 
           <t>This document creates a new IKEv2 IANA registry for the types
-          of the Member Key Download attributes which is initially filled as described in <xref target="IANA" />.
+          of the Member Key Packet attributes which is initially filled as described in <xref target="IANA" />.
           In particular, the following attributes are initially added.
 
           <figure>
             <artwork align="center"><![CDATA[
-MKD Attributes          Value   Type    Multiple
+Member Key Packet
+Attributes              Value   Type    Multiple
 ------------------------------------------------
 Reserved                0
-KEY_WRAP_KEY            1       V       Y
-GM_SID                  2       V       Y
-AUTH_KEY                3       V       N
+WRAP_KEY                1       V       Y
+AUTH_KEY                2       V       N
+GM_SID                  3       V       Y
             ]]></artwork>
           </figure>
+          </t>
 
-          The attributes must follow the format defined in the IKEv2 <xref
+          <t>The attributes must follow the format defined in the IKEv2 <xref
           target="RFC7296"></xref> section 3.3.5. In the table, attributes
           that are defined as TV are marked as Basic (B); attributes that
           are defined as TLV are marked as Variable (V).
           </t>
 
-          <section anchor="mkd_attr_kwk" title="KEY_WRAP_KEY Attribute">
-            <t>The KEY_WRAP_KEY attribute contains a key that is used 
-            to encrypt other keys. One or more the these
-            attributes are sent to GMs if the GCKS key management policy
+          <section anchor="mkd_attr_kwk" title="WRAP_KEY Attribute">
+            <t>The WRAP_KEY attribute (1) contains a key that is used 
+            to encrypt other keys. One or more these
+            attributes are sent to GMs if the GCKS key management method
             relies on some key hierarchy (e.g. LKH).
+            This attribute MUST NOT be used if inband rekeying (via the GSA_INBAND_REKEY exchange) is employed by the GCKS for the GM.
             </t>
 
             <t>The content of the attribute has a format defined in <xref target="wrapped_key" />
             with a precondition that the Key ID field MUST NOT be zero. 
             The algorithm associated with the key
-            is from the Encryption Transform for the SA the KEY_WRAP_KEY
+            is from the Encryption Transform for the SA the WRAP_KEY
             attributes was sent in. The size of the key MUST be equal to the 
             key size for this algorithm.
             </t>
 
-            <t>Multiple instances of the KEY_WRAP_KEY attributes MAY be present in the key packet.
-            </t>
-          </section>
-
-          <section anchor="mkd_attr_gm_sid" title="GM_SID Attribute">
-            <t>The GM_SID attribute is used to download one or more Sender-ID 
-            values for the exclusive use of a group member. One or more of this attributes MUST be
-            sent by the GCKS if the GM informed the GCKS that it would be a sender (by inclusion
-            the SENDER notification to the request) and at least one of the data security SAs 
-            included in the GSA payload uses counter-based mode of encryption. 
-            </t>
-
-            <t>If the GMs has requested multiple SID values in the SENDER notification, then the GCKS SHOULD
-            provide it with the requested number of SIDs by sending multiple instances of the GM_SID
-            attribute. The GCKS MAY send fewer SIDs than requested by the GM (e.g. if it is running out of SIDs),
-            but it MUST NOT send more than requested.
+            <t>Multiple instances of the WRAP_KEY attributes MAY be present in the key packet.
             </t>
           </section>
 
           <section anchor="mkd_attr_auth_key" title="AUTH_KEY Attribute">
-            <t>The AUTH_KEY attribute contains the key that is used to authenticate 
+            <t>The AUTH_KEY attribute (2) contains the key that is used to authenticate 
             the GSA_REKEY messages. The content of the attribute depends on the authentication
-            method the GCKS specified in the Authentication Method transform
-            in the GSA payload.
+            method the GCKS specified in the Authentication Method transform in the GSA payload.
             <list style="symbols">
               <t>If a shared secret is used for the GSA_REKEY messages authentication 
               then the content of the AUTH_KEY attribute is the shared
@@ -2275,6 +2344,25 @@ AUTH_KEY                3       V       N
             </list>
 
             Multiple instances of the AUTH_KEY attributes MUST NOT be sent.
+            This attribute MUST NOT appear in the rekey operations (in the GSA_REKEY or GSA_INBAND_REKEY exchanges).
+            </t>
+          </section>
+
+          <section anchor="mkd_attr_gm_sid" title="GM_SID Attribute">
+            <t>The GM_SID attribute (3) is used to download one or more Sender-ID 
+            values for the exclusive use of a group member. One or more of this attributes MUST be
+            sent by the GCKS if the GM informed the GCKS that it would be a sender (by inclusion
+            the SENDER notification to the request) and at least one of the Data-Security SAs 
+            included in the GSA payload uses counter-based mode of encryption. 
+            </t>
+
+            <t>If the GMs has requested multiple SID values in the SENDER notification, then the GCKS SHOULD
+            provide it with the requested number of SIDs by sending multiple instances of the GM_SID
+            attribute. The GCKS MAY send fewer SIDs than requested by the GM (e.g. if it is running out of SIDs),
+            but it MUST NOT send more than requested.
+            </t>
+
+            <t>This attribute MUST NOT appear in the rekey operations (in the GSA_REKEY or GSA_INBAND_REKEY exchanges).
             </t>
           </section>
         </section>
@@ -2479,35 +2567,11 @@ AUTH_KEY                3       V       N
       </section>
 
       <section anchor="delete" title="Delete Payload">
-        <t>There are occasions when the GCKS may want to signal to group
-        members to delete policy at the end of a broadcast, if group policy
-        has changed, or the GCKS needs to reset the policy and keying material
-        for the group due to an emergency. Deletion of keys MAY be
-        accomplished by sending an IKEv2 Delete Payload, section 3.11 of <xref
-        target="RFC7296"></xref> as part of a registration or rekey Exchange.
-        Whenever an SA is to be deleted, the GKCS SHOULD send the Delete
-        Payload in both registration and rekey exchanges, because GMs with
-        previous group policy may contact the GCKS using either exchange.
-        </t>
-
-        <t>The Protocol ID MUST be GIKE_REKEY (&lt;TBA&gt;) for GSA_REKEY pseudo-exchange, 2 for AH or 3
-        for ESP. Note that only one protocol id value can be defined in a
-        Delete payload. If a TEK and a KEK SA for GSA_REKEY pseudo-exchange must be
-        deleted, they must be sent in different Delete payloads. Similarly, if
-        a TEK specifying ESP and a TEK specifying AH need to be deleted, they
-        must be sent in different Delete payloads.
-        </t>
-
-        <t>There may be circumstances where the GCKS may want to reset the
-        policy and keying material for the group. The GCKS can signal deletion
-        of all policy of a particular TEK by sending a TEK with a SPI value
-        equal to zero in the delete payload. In the event that the
-        administrator is no longer confident in the integrity of the group
-        they may wish to remove all KEK and all the TEKs in the group. This is
-        done by having the GCKS send a delete payload with a SPI of zero and a
-        Protocol-ID of AH or ESP to delete all TEKs, followed by another
-        delete payload with a SPI value of zero and Protocol-ID of KEK SA to
-        delete the KEK SA.
+        <t> Delete payload is used in G-IKEv2 when the GCKS wants to 
+        delete Data-Security and Rekey SAs. The interpretation of the Protocol
+        field in the Delete payload is extended, so that zero protocol
+        indicates deletion of whole Group SA (i.e. all Data-Security SAs and Rekey SA).
+        See <xref target="deletion" /> for detail.
         </t>
       </section>
 
@@ -2520,21 +2584,23 @@ AUTH_KEY                3       V       N
         communicate error conditions and status (see <xref target="IANA" />).
         <list style="symbols">
           <t>INVALID_GROUP_ID (45) - error type notification that indicates that 
-          the group id sent during the registration process is invalid.
+          the group ID sent during the registration process is invalid.
           The Protocol ID and SPI Size fields in the Notify payload MUST be zero. 
           There is no data associated with this notification and the content of the 
           Notification Data field MUST be ignored on receipt.
           </t>
 
           <t>AUTHORIZATION_FAILED (46) - error type notification that is sent in 
-          the response to a GSA_AUTH message when authorization failed.
+          the response to a GSA_AUTH or GSA_REGISTRATION message when authorization failed.
           The Protocol ID and SPI Size fields in the Notify payload MUST be zero.
           There is no data associated with this notification and the content of the 
           Notification Data field MUST be ignored on receipt.
           </t>
 
           <t>REGISTRATION_FAILED (&lt;TBA&gt;) - error type notification that is sent 
-          by the GCKS when the GM registration request cannot be satisfied.
+          by the GCKS when the GM registration request cannot be satisfied
+          for the reasons not related to this particular GM, for example if 
+          the capacity of the group is exceeded.
           The Protocol ID and SPI Size fields in the Notify payload MUST be zero.
           There is no data associated with this notification and the content of the 
           Notification Data field MUST be ignored on receipt.
@@ -2562,9 +2628,9 @@ AUTH_KEY                3       V       N
 <!-- YYYY -->
         <section anchor="tunnel" title="USE_TRANSPORT_MODE Notification">
           <t>This specification uses USE_TRANSPORT_MODE notification defined in section 3.10.1 of
-          <xref target="RFC7296" /> to specify which mode data security SAs should be created in.
+          <xref target="RFC7296" /> to specify which mode Data-Security SAs should be created in.
           The GCKS MUST include one USE_TRANSPORT_MODE notification in a message containing the GSA payload 
-          for every data security SAs specified in this payload that is to be created in transport mode.
+          for every Data-Security SAs specified in this payload that is to be created in transport mode.
           In other words, there must be as many these notifications included in the message as many SAs are created in transport mode.
           The Protocol ID, SPI Size and SPI fields of the Notify Payload MUST correctly specify each such SA.
           </t>
@@ -2582,19 +2648,112 @@ AUTH_KEY                3       V       N
       </section> 
     </section>
 
+    <section anchor="restrictions" title="Usigng G-IKEv2 Attributes">
+      <t>G-IKEv2 defines a number of attributes, that are used to convey information
+      from GCKS to GMs. There are some restrictions on where and when these attributes
+      can appear in G-IKEv2 messages, which are defined when the attributes are introduced.
+      For convenience these restrictions are summarized in <xref target="mcast_attr" /> (for
+      multicast rekey operations) and <xref target="inband_attr" /> (for inband rekey operations) below.
+      </t>
+
+      <t>The following notation is used:
+      <list style="hanging" hangIndent="6" >
+        <t hangText = "S" >
+        A single attribute of this type must be present
+        </t>
+        <t hangText = "M" >
+        Multiple attributes of this type may be present
+        </t>
+        <t hangText = "[]" >
+        Attribute is optional
+        </t>
+        <t hangText = "-" >
+        Attribute must not be present
+        </t>
+      </list>
+      Note, that the restrictions are defined per a substructure corresponding attributes 
+      are defined for and not per whole G-IKEv2 message.
+      </t>
+
+      <texttable anchor="mcast_attr" title="Using attributes in G-IKEv2 exchanges when multicast rekey is used">
+        <ttcol align="left" width="40%">Attributes</ttcol>
+        <ttcol align="center" width="30%">GSA_AUTH GSA_REGISTRATION</ttcol>
+        <ttcol align="center" width="30%">GSA_REKEY</ttcol>
+        <c>GSA_KEY_LIFETIME</c><c>S</c><c>S</c>
+        <c>GSA_INITIAL_MESSAGE_ID</c><c>[S]</c><c>[S]</c>
+        <c>GSA_NEXT_SPI</c><c>[M]</c><c>[M]</c>
+        <c>GAP_ATD</c><c>[S]</c><c>[S]</c>
+        <c>GAP_DTD</c><c>[S]</c><c>[S]</c>
+        <c>GAP_SID_BITS</c><c>S*</c><c>-</c>
+        <c>SA_KEY</c><c>S</c><c>S/[M]**</c>
+        <c>WRAP_KEY</c><c>[M]**</c><c>[M]**</c>
+        <c>AUTH_KEY</c><c>[S]***</c><c>-</c>
+        <c>GM_SID</c><c>S*/[M]*</c><c>-</c>
+      </texttable>
+
+      <t>
+        <list style="hanging" hangIndent="6" >
+          <t hangText = "*" >
+          The GAP_SID_BITS attribute must be present if the GCKS policy includes at least one 
+          cipher in counter mode of operation and the GM included the SENDER notify into the registration request. 
+          Otherwise it must not be present. At least one GM_SID attribute must be present 
+          in the former case (and more may be present if the GM requested more SIDs) 
+          and no GM_SID attributes must be present in the latter case.
+          </t>
+          <t hangText = "**" >
+          The WRAP_KEY attributes may be present if the GCKS employs key management
+          method that relies on key tree (like LKH).
+          </t>
+          <t hangText = "***" >
+          The AUTH_KEY attribute must be present if the GCKS employs authentication method
+          other than NULL Authentication.
+          </t>
+        </list>
+      </t>
+
+      <texttable anchor="inband_attr" title="Using attributes in G-IKEv2 exchanges when inband rekey is used">
+        <ttcol align="left" width="40%">Attributes</ttcol>
+        <ttcol align="center" width="30%">GSA_AUTH GSA_REGISTRATION</ttcol>
+        <ttcol align="center" width="30%">GSA_INBAND_REKEY</ttcol>
+        <c>GSA_KEY_LIFETIME</c><c>[S]</c><c>[S]</c>
+        <c>GSA_INITIAL_MESSAGE_ID</c><c>-</c><c>-</c>
+        <c>GSA_NEXT_SPI</c><c>-</c><c>-</c>
+        <c>GAP_ATD</c><c>[S]</c><c>[S]</c>
+        <c>GAP_DTD</c><c>[S]</c><c>[S]</c>
+        <c>GAP_SID_BITS</c><c>S*</c><c>-</c>
+        <c>SA_KEY</c><c>S</c><c>S</c>
+        <c>WRAP_KEY</c><c>-</c><c>-</c>
+        <c>AUTH_KEY</c><c>-</c><c>-</c>
+        <c>GM_SID</c><c>S*/[M]*</c><c>-</c>
+      </texttable>
+
+      <t>
+        <list style="hanging" hangIndent="6" >
+          <t hangText = "*" >
+          The GAP_SID_BITS attribute must be present if the GCKS policy includes at least one 
+          cipher in counter mode of operation and the GM included the SENDER notify into the registration request. 
+          Otherwise it must not be present. At least one GM_SID attribute must be present 
+          in the former case (and more may be present if the GM requested more SIDs) 
+          and no GM_SID attributes must be present in the latter case.
+          </t>
+        </list>
+      </t>
+    </section>
+
     <section title="Interaction with other IKEv2 Protocol Extensions" anchor="ike_ext" >
       <t>A number of IKEv2 extensions is defined that can be used to extend
       protocol functionality. G-IKEv2 is compatible with most of them.
       In particular, EAP authentication defined in <xref target="RFC7296" /> can be used 
-      to establish registration IKE SA, as well as Secure Password authentication
-      (<xref target="RFC6467" />). G-IKEv2 is compatible with and can use IKEv2 Session Resumption
-      <xref target="RFC5723"></xref> except that a GM would include the
-      initial ticket request in a GSA_AUTH exchange instead of an
-      IKE_AUTH exchange. G-IKEv2 is also compatible with Multiple Key Exchanges in IKEv2 
+      to establish registration IKE SA, as well as EAP-only authentication <xref target="RFC5998" /> and 
+      Secure Password authentication <xref target="RFC6467" />. 
+      G-IKEv2 is compatible with and can use IKEv2 Redirect Mechanism <xref target="RFC5685" /> and 
+      IKEv2 Session Resumption <xref target="RFC5723"></xref>. 
+      G-IKEv2 is also compatible with Multiple Key Exchanges in IKEv2 
       framework, defined in <xref target="I-D.ietf-ipsecme-ikev2-multiple-ke" />.
       </t>
 
-      <t>Some IKEv2 extensions however require special handling if used in G-IKEv2.
+      <t>The above list of compatible IKEv2 extensions is not exhaustive, however some IKEv2 
+      extensions require special handling if used in G-IKEv2.
       </t>
 
       <section title="Mixing Preshared Keys in IKEv2 for Post-quantum Security">
@@ -2602,9 +2761,17 @@ AUTH_KEY                3       V       N
         Postquantum Preshared Keys (PPK) for IKEv2 <xref
         target="RFC8784"></xref>. However, the use of 
         PPK leaves the initial IKE SA susceptible to quantum
-        computer (QC) attacks. For this reason an alternative approach
-        for using PPK in IKEv2 defined in <xref target="I-D.smyslov-ipsecme-ikev2-qr-alt" />
-        SHOULD be used.
+        computer (QC) attacks. Since group SA keys are protected with 
+        the default KWK (GSK_w), which is derived from SK_d and thus
+        cannot be broken even by attacker tquipped with a QC, authentication 
+        of these keys relies on authentication of IKE SA messages, which is not 
+        secure against QC until the initial IKE SA is rekeyed. 
+        In additional, the other content of IKE SA messages may also 
+        be visible to an attacker with a QC. See Section 6 of <xref target="RFC8784" /> for details.
+
+
+        For this reason an alternative approach for using PPK in IKEv2 defined in 
+        <xref target="I-D.smyslov-ipsecme-ikev2-qr-alt" /> SHOULD be used.
         </t>
 
         <t>If the alternative approach is not supported by the peers,
@@ -2703,7 +2870,6 @@ AUTH_KEY                3       V       N
       </section>
     </section>
 
-
     <section title="Security Considerations">
       <section title="GSA Registration and Secure Channel">
         <t>G-IKEv2 registration exchange uses IKEv2 IKE_SA_INIT protocols,
@@ -2723,10 +2889,17 @@ AUTH_KEY                3       V       N
         GSA member registration exchanged.</t>
 
         <section title="Authentication/Authorization">
-          <t>Authentication is implicit, the public key of the identity is
-          distributed during the registration, and the receiver of the rekey
-          message uses that public key and identity to verify the message came
-          from the authorized GCKS.</t>
+          <t>The authentication key is distributed during the GM registration, 
+          and the receiver of the rekey message uses that key to verify the message came 
+          from the authorized GCKS. An implicit authentication can also be used,
+          in which case the ability of the GM to decrypt and to verify ICV
+          of the received message proved taht a sender of the message is a member of the group.
+          However, implicit authentication as well as authentication with preshared key
+          don't provide source origin authentication, so the GM cannot be sure
+          that the message came from the GCKS. For this reason using implicit
+          authentication and authentication with preshared key is NOT RECOMMENDED
+          unless in a small group of trusted parties.
+          </t>
         </section>
 
         <section title="Confidentiality">
@@ -2796,12 +2969,12 @@ Private Use     1024-65535
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-GSA Attributes          Value  Type   Multiple  Used In
+GSA Attributes          Value  Type   Multiple  Protocol
 ---------------------------------------------------------------------
 Reserved                0
-GSA_KEY_LIFETIME        1      V      N         (GIKE_REKEY, AH, ESP)
-GSA_INITIAL_MESSAGE_ID  2      V      N         (GIKE_REKEY)
-GSA_NEXT_SPI            3      V      Y         (GIKE_REKEY, AH, ESP)
+GSA_KEY_LIFETIME        1      V      N         GIKE_REKEY, AH, ESP
+GSA_INITIAL_MESSAGE_ID  2      V      N         GIKE_REKEY
+GSA_NEXT_SPI            3      V      Y         GIKE_REKEY, AH, ESP
 Unassigned             5-16383
 Private Use        16384-32767
           ]]></artwork>
@@ -2826,15 +2999,16 @@ Private Use            16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "Group Key Download Attributes". The initial values of the new registry are:
+        <t>This document creates a new IANA registry "Group Key Packet Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-GKD Attributes      Value   Type    Multiple    Used In
+Group Key Packet
+Attributes          Value   Type    Multiple    Protocol
 ------------------------------------------------------------
 Reserved            0
-SA_KEY              1       V       Y           (GIKE_REKEY)
-                                    N           (AH, ESP)
+SA_KEY              1       V       Y           GIKE_REKEY,
+                                    N           AH, ESP
 Unassigned         2-16383
 Private Use    16384-32767
           ]]></artwork>
@@ -2842,16 +3016,17 @@ Private Use    16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "Member Key Download Attributes". The initial values of the new registry are:
+        <t>This document creates a new IANA registry "Member Key Packet Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-MKD Attributes          Value   Type    Multiple
+Member Key Packet
+Attributes              Value   Type    Multiple
 ------------------------------------------------
 Reserved                0
-KEY_WRAP_KEY            1       V       Y
-GM_SID                  2       V       Y
-AUTH_KEY                3       V       N
+WRAP_KEY                1       V       Y
+AUTH_KEY                2       V       N
+GM_SID                  3       V       Y
 Unassigned             4-16383
 Private Use        16384-32767
           ]]></artwork>
@@ -2900,14 +3075,14 @@ Value       Next Payload Type               Notation
           <artwork align="left"><![CDATA[
 Type  Description                          Used In
 ---------------------------------------------------------------------
-1     Encryption Algorithm (ENCR)          (IKE, GIKE_REKEY and ESP)
-2     Pseudo-random Function (PRF)         (IKE, GIKE_REKEY)
-3     Integrity Algorithm (INTEG)          (IKE, GIKE_REKEY, AH, 
-                                            optional in ESP)
-4     Diffie-Hellman Group (D-H)           (IKE, optional in AH, ESP)
-5     Extended Sequence Numbers (ESN)      (AH and ESP)
-<TBA> Authentication Method (AUTH)         (GIKE_REKEY)
-<TBA> Group Key Management Method (GKM)    (GIKE_REKEY)
+1     Encryption Algorithm (ENCR)          IKE, GIKE_REKEY and ESP
+2     Pseudo-random Function (PRF)         IKE, GIKE_REKEY
+3     Integrity Algorithm (INTEG)          IKE, GIKE_REKEY, AH, 
+                                           optional in ESP
+4     Diffie-Hellman Group (D-H)           IKE, optional in AH, ESP
+5     Extended Sequence Numbers (ESN)      AH and ESP
+<TBA> Authentication Method (AUTH)         GIKE_REKEY
+<TBA> Group Key Management Method (GKM)    GIKE_REKEY
 ]]><!-- XXXX <![CDATA[<TBA> Encapsulation Mode (MODE)             (AH and ESP)
           ]]> --></artwork>
         </figure>
@@ -3044,6 +3219,8 @@ Value       Notify Messages - Error Types
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.4309.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.4543.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5374.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5685.xml"?>
+      <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5998.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5723.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6467.xml"?>
       <?rfc include="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7383.xml"?>
@@ -3108,21 +3285,26 @@ Value       Notify Messages - Error Types
       <section anchor="lkh_notation" title="Notation">
         <t>In this section we will use the notation X{Y} 
         where a key with ID Y is encrypted with the key with ID X.
-        The notation 0{Y} means that the default wrap key (SK_w) is used 
-        to encrypt key Y, and the notation X{0} means key X is used 
-        to encrypt the group SA key. Note, that 0{0} means that
-        the group SA key is encrypted with default wrap key.
+        The notation GSK_w{Y} means that the default wrap key GSK_w (with zero KWK ID)is used 
+        to encrypt key Y, and the notation X{K_sa} means key X is used 
+        to encrypt the SA key K_sa (wich always has zero Key ID). Note, that GSK_w{K_sa} means that
+        the SA key is encrypted with the default wrap key, in which case both KWK ID and Key ID are zero.
+        For simplicity we will assume that 
         </t>
 
         <t>The content of the KD payload will be shown as a sequence
-        of Key Packets. The Group Key Packet substructure will be denoted as SAn(),
-        when n is an SPI for the SA, and The Member Key Packet substructure
-        will be denoted as GM(). The content of the Key Packets 
-        is shown as SA_KEY and KEY_WRAP_KEY attributes with the notation
-        described above. Here is the example of KD payload.
+        of Key Packets. The Group Key Packet substructure will be denoted as GP(SAn)(),
+        when n is an SPI for the SA, and the Member Key Packet substructure
+        will be denoted as MP(). The content of the Key Packets 
+        is shown as SA_KEY and WRAP_KEY attributes with the notation
+        described above. For simplicity the type of the attribute will not be shown,
+        because it is implicitly defined by the type of Key Packet.
+        </t>
+
+        <t> Here is the example of KD payload.
         <figure align="center">
           <artwork align="center"><![CDATA[
-KD(SA1(X{0}),GM(Y{X},Z{Y},0{Z})
+KD(GP1(X{K_sa}),MP(Y{X},Z{Y},GSK_w{Z})
           ]]></artwork>
         </figure>
 
@@ -3130,8 +3312,8 @@ KD(SA1(X{0}),GM(Y{X},Z{Y},0{Z})
         </t>
 
         <t>We will also use the notation X-&gt;Y-&gt;Z
-        to describe the Key Path, i.e. the relation between the keys.
-        In this case the keys had the following relation: Z{Y}, Y{X}.
+        to describe the Key Path. In this case key Y is needed to dectypt key X and key Z is needed to decrypt key Y.
+        In the example above the keys had the following relation: K_sa-&gt;X-&gt;Y-&gt;Z-&gt;GSK_w.
         </t>
       </section>
 
@@ -3141,8 +3323,7 @@ KD(SA1(X{0}),GM(Y{X},Z{Y},0{Z})
         the values of their Key IDs in the figure) and a private key shared with only a single GM
         (the GMs are represented as letters followed by the corresponding 
         key ID in parentheses in the figure). The root of the tree contains the
-        multicast rekey SA key (which is represented as SAn(0), showing
-        that its Key ID is always zero). The figure below assumes that the Key IDs
+        multicast Rekey SA key (which is represented as SAn(K_san). The figure below assumes that the Key IDs
         are assigned sequentially; this is not a requirement and only used
         for illustrative purposes. The GCKS may create a complete tree as shown, or a partial tree which is
         created on demand as members join the group.
@@ -3150,7 +3331,7 @@ KD(SA1(X{0}),GM(Y{X},Z{Y},0{Z})
 
         <figure align="center" anchor="initial-tree" title="Initial LKH tree">
           <artwork align="center"><![CDATA[
-                          SA1(0)
+                          SA1(K_sa1)
              +------------------------------+
              1                              2
      +---------------+              +---------------+
@@ -3161,24 +3342,24 @@ A(7)    B(8)    C(9)   D(10)  E(11)    F(12)  G(13)    H(14)
         </figure>
 
         <t>When GM A joins the group, the GCKS provides it
-        with the keys in the KEY_WRAP_KEY attributes in the KD payload of the GSA_AUTH or
+        with the keys in the KD payload of the GSA_AUTH or
         GSA_REGISTRATION exchange. Given the tree shown in figure above, the
         KD payload will be:
 
 <figure align="center" title="KD Payload for the Group Member A">
   <artwork align="center"><![CDATA[
-KD(SA1(1{0}),GM(3{1},7{3},0{7})
+KD(GP(SA1)(1{K_sa1}),MP(3{1},7{3},GSK_w{7})
   ]]></artwork>
 </figure>
 
         From these attributes the GM A will construct 
-        the Key Path 0-&gt;1-&gt;3-&gt;7-&gt;0 and since it
-        ends up with SK_w, it will use all the KEY_WRAP_KEY attributes 
-        present in the path as its working Key Path: 1-&gt;3-&gt;7.
+        the Key Path K_sa1-&gt;1-&gt;3-&gt;7-&gt;GSK_w and since it
+        ends up with GSK_w, it will use all the WRAP_KEY attributes 
+        present in the path as its Working Key Path: 1-&gt;3-&gt;7.
         </t>
 
         <t>Similarly, when other GMs will be joining the group they will be provided with the corresponding 
-        keys, so after all the GMs will have the following working Key Paths:
+        keys, so after all the GMs will have the following Working Key Paths:
         <figure align="center">
           <artwork align="left"><![CDATA[
 A: 1->3->7      B: 1->3->8      C: 1->4->9,     D: 1->4->10
@@ -3193,13 +3374,13 @@ E: 2->5->11     F: 2->5->12     G: 2->6->13     H: 2->6->14
         it will only send Group Key Packet in the KD payload with a new
         SA key encrypted with the default KWK.
 
-        <figure align="center" title="KD Payload for the Group Member F">
+        <figure align="center" title="KD Payload for the Simple Group SA Rekey">
           <artwork align="center"><![CDATA[
-KD(SA2(0{0}))
+KD(GP(SA2)(GSK_w{K_sa2}))
           ]]></artwork>
         </figure>
 
-        All the GMs will be able to decrypt it and no changes in their working Key Paths will take place.
+        All the GMs will be able to decrypt it and no changes in their Working Key Paths will happen.
         </t>
       </section>
 
@@ -3212,13 +3393,13 @@ KD(SA2(0{0}))
 
         <t>In the example below the GCKS excludes GM F. For this purpose
         it changes the key tree as follows, replacing the key 2 with the key 15 and
-        the key 5 with the key 16. It also a new SA key for a new SA3.
+        the key 5 with the key 16. It also generates a new SA key for a new SA3.
         </t>
 
         <figure align="center" anchor="updated-tree"
                 title="LKH tree after F has been excluded">
           <artwork align="center"><![CDATA[
-                          SA3(0)
+                          SA3(K_sa3)
              +------------------------------+
              1                             15
      +---------------+              +---------------+
@@ -3228,38 +3409,38 @@ A(7)    B(8)    C(9)   D(10)  E(11)    F(12)  G(13)    H(14)
           ]]></artwork>
         </figure>
 
-        <t>Then it sends the following KD payload for the new rekey SA3:
+        <t>Then it sends the following KD payload for the new Rekey SA3:
 
         <figure align="center" title="KD Payload for the Group Member F">
           <artwork align="center"><![CDATA[
-KD(SA3(1{0},SA3(15{0})),GM(6{15},16{15},11{16})
+KD(GP(SA3)(1{K_sa3},15{K_sa3}),MP(6{15},16{15},11{16})
           ]]></artwork>
         </figure>
 
         While processing this KD payload:
         <list style="symbols">
-          <t>GMs A, B, C and D will be able to decrypt the SA_KEY attribute 1{0} by using
+          <t>GMs A, B, C and D will be able to decrypt the SA_KEY attribute 1{K_sa3} by using
           the "1" key from their key path. Since no new GM_KEY attributes are in the new 
-          Key Path, they won't update their working Key Paths.
+          Key Path, they won't update their Working Key Paths.
           </t>
-          <t>GMs G and H will construct new Key Path 15-&gt;0 and will be able to decrypt
-          the new GM_KEY 15 using the key 6 from their working Key Paths. So, they will
-          update their working Key Paths replacing their beginnings up to the key 6 
+          <t>GMs G and H will construct new Key Path 15-&gt;6 and will be able to decrypt
+          the intermediate key 15 using the key 6 from their Working Key Paths. So, they will
+          update their Working Key Paths replacing their beginnings up to the key 6 
           with the new Key Path (thus replacing the key 2 with the key 15).
           </t>
-          <t>GM E will construct new Key Path 16-&gt;15-&gt;0 and will be able to decrypt
-          the new GM_KEY 16 using the key 11 from its working Key Path. So, it will
-          update its working Key Path replacing its beginnings up to the key 11 
+          <t>GM E will construct new Key Path 16-&gt;15-&gt;11 and will be able to decrypt
+          the intermediate key 16 using the key 11 from its Working Key Path. So, it will
+          update its Working Key Path replacing its beginnings up to the key 11 
           with the new Key Path (thus replacing the key 2 with the key 15 and the key 5 with the key 16).
           </t>
           <t>GM F won't be able to construct any Key Path leading to any key he possesses,
           so it will be unable to decrypt the new SA key for the SA3 and thus it will be excluded
-          from the group once the GCKS starts sending TEK keys using SA3.
+          from the group once the SA3 is used.
           </t>
         </list>
         </t>
 
-        <t>Finally, the GMs will have the following working Key Paths:
+        <t>Finally, the GMs will have the following Working Key Paths:
         <figure align="center">
           <artwork align="left"><![CDATA[
 A: 1->3->7      B: 1->3->8      C: 1->4->9,     D: 1->4->10
