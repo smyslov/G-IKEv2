@@ -66,7 +66,7 @@
       The data communications within the group (e.g., IP multicast packets)
       are protected by a key pushed to the group members (GMs) by the Group
       Controller/Key Server (GCKS). This document presents an extension to IKEv2
-      <xref target="RFC7296"></xref> called G-IKEv2, that allows to perform a group key
+      <xref target="RFC7296"></xref> called G-IKEv2, which allows to perform a group key
       management.</t>
 
       <t>G-IKEv2 conforms to the Multicast Group Security
@@ -300,7 +300,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           for registration (unicast) IKE SA, as defined in <xref target="RFC8229" />.
           </t>
 
-          <t>Section 2.23 of <xref target="RFC7296" /> describes how IKEv2 deals with NATs.
+          <t>Section 2.23 of <xref target="RFC7296" /> describes how IKEv2 supports paths with NATs.
           Despite the fact, that with G-IKEv2 the registration SA doesn't create any unicast IPsec SAs and thus 
           there is no unicast ESP traffic between the GM and the GCKS to encapsulate in UDP if NAT is present, 
           the actions described in this section concerned with the IKE SA MUST be honored. 
