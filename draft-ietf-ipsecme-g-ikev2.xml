@@ -60,14 +60,14 @@
 
   <middle>
     <section title="Introduction and Overview">
-      <t> A group key management protocol provides IPsec keys and policy to a
+      <t> This document presents an extension to IKEv2
+      <xref target="RFC7296"></xref> called G-IKEv2, which allows performing a group key
+      management. A group key management protocol provides IPsec keys and policy to a
       set of IPsec devices which are authorized to communicate using a Group
       Security Association (GSA) defined in <xref target="RFC3740"></xref>.
       The data communications within the group (e.g., IP multicast packets)
       are protected by a key pushed to the group members (GMs) by the Group
-      Controller/Key Server (GCKS). This document presents an extension to IKEv2
-      <xref target="RFC7296"></xref> called G-IKEv2, which allows performing a group key
-      management.</t>
+      Controller/Key Server (GCKS). </t>
 
       <t>G-IKEv2 conforms to the Multicast Group Security
       Architecture <xref target="RFC3740"></xref>, Multicast Extensions to the
@@ -94,33 +94,32 @@
       <t>Large and small groups may use different sets of these protocols.
       When a large group of devices are communicating, the GCKS is likely to
       use the GSA_REKEY message for efficiency. This is shown in <xref
-      target="large-groups"></xref>. (Note: For clarity, IKE_SA_INIT is
-      omitted from <xref target="large-groups" /> and <xref target="small-groups" />).</t>
+      target="large-groups"></xref>, where multicast communications indicated with doulle line. 
+      (Note: For clarity, IKE_SA_INIT is omitted from <xref target="large-groups" /> and <xref target="small-groups" />).</t>
 
       <figure anchor="large-groups" title="G-IKEv2 used in large groups">
         <artwork align="center" name=""><![CDATA[
                       +--------+
-       +------------->|  GCKS  |<-------------+
+       +----IKEv2---->|  GCKS  |<----IKEv2----+
        |              +--------+              |
-       |                |    ^                |
-       |                |    |                |
-       |                | GSA_AUTH            |
-       |                |   or                |
-       |                | GSA_REGISTRATION    |
-       |                |    |                |
-    GSA_AUTH            |    |             GSA_AUTH
-      or           GSA_REKEY |               or
-GSA_REGISTRATION        |    |         GSA_REGISTRATION
-       |                |    |                |
-       |   +------------+-----------------+   |
-       |   |            |    |            |   |
-       v   v            v    v            v   v
+       |               ||    ^                |
+       |               ||    |                |
+       |               || GSA_AUTH            |
+       |               ||   or                |
+       |               || GSA_REGISTRATION    |
+       |               ||    |                |
+    GSA_AUTH           ||  IKEv2           GSA_AUTH
+      or               ||    |               or
+GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
+       |               ||    |                |
+       |    *==========**================*    |
+       |   ||          ||    |           ||   |
+       v   \/          \/    v           \/   v
      +-------+        +--------+        +-------+
      |  GM   |  ...   |   GM   |  ...   |  GM   |
      +-------+        +--------+        +-------+
-         ^                 ^                ^
-         |                 |                |
-         +-----ESP/AH------+-----ESP/AH-----+
+        ||                ||               ||
+         *=====ESP/AH=====**=====ESP/AH====*
 ]]></artwork>
       </figure>
 
@@ -132,22 +131,21 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
       <figure anchor="small-groups" title="G-IKEv2 used in small groups">
         <artwork align="center" name=""><![CDATA[ 
    GSA_AUTH or GSA_REGISTRATION, GSA_INBAND_REKEY
- +-----------------------------------------------+
+ +--------------------IKEv2----------------------+
  |                                               |
  |   GSA_AUTH or GSA_REGISTRATION,               |
  |         GSA_INBAND_REKEY                      |
- |   +-----------------------------+             |
+ |   +-----------IKEv2-------------+             |
  |   |                             |             |
  |   |GSA_AUTH or GSA_REGISTRATION,|             |
  |   |      GSA_INBAND_REKEY       |             |
- |   |   +--------+                |             |
+ |   |   +--IKEv2-+                |             |
  v   v   v        v                v             v
 +---------+    +----+           +----+        +----+
 | GCKS/GM |    | GM |           | GM |        | GM |
 +---------+    +----+           +----+        +----+
-     ^            ^                ^             ^
-     |            |                |             | 
-     +---ESP/AH---+----ESP/AH------+---ESP/AH----+
+     ||          ||               ||            || 
+      *==ESP/AH==**=====ESP/AH====**===ESP/AH===*
 ]]></artwork>
       </figure>
 
@@ -220,7 +218,7 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           An administrative entity that chooses the policy for a group.
           </t> -->
 
-          <dt>Data-Security SA</dt>
+<!--      <dt>Data-Security SA</dt>
           <dd>The security policy distributed by a GDOI GCKS
           describing traffic that is expected to be protected by group
           members.  This document described the distribution of IPsec AH
@@ -229,10 +227,22 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
 
           <dt>Rekey SA</dt>
           <dd>The security policy protecting Group Key Management Protocol.
+          </dd> -->
+
+          <dt>Data-Security SA</dt>
+          <dd>A multicast SA between each multicast sender and the group's receivers.
+          The Data-Security SA protects data between member senders and
+          member receivers. One or more SAs are required for the multicast transmission of
+          data-messages from the Group Sender to other group members.
+          </dd>
+
+          <dt>Rekey SA</dt>
+          <dd>A single multicast SA between the GCKS and all of the group members.
+          This SA is used for multicast transmission of key management messages from the GCKS to all GMs.
           </dd>
 
           <dt>Group Security Association (GSA)</dt>
-          <dd>A collection of Data-Security Associations (SAs) and Rekey SAs
+          <dd>A collection of Data-Security SAs and Rekey SA
           necessary for a Group Member to receive key updates.
           A GSA describes the working policy for a group.  Refer to <xref target="RFC4046" />
           for additional information.
@@ -362,10 +372,10 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
 
     <section title="G-IKEv2 Protocol">
       <section title="G-IKEv2 Integration into IKEv2 Protocol">
-        <t>G-IKEv2 is an extension to IKEv2 and uses its security mechanisms (peer authentication,
+        <t>G-IKEv2 is an extension to IKEv2 that <!-- uses its security mechanisms (peer authentication,
         confidentiality, message integrity) to ensure that only authenticated and authorized 
         devices have access to the group policy and keys. 
-        G-IKEv2 provides secure policy and keys download from the GCKS to GMs. 
+        G-IKEv2 --> provides group authorizatiom, secure policy and keys download from the GCKS to GMs. 
         </t>
 
         <t>G-IKEv2 is compatible with most IKEv2 extensions defined so far and it is believed that 
@@ -500,10 +510,10 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
         It authenticates the previously exchanged messages, exchanges identities and certificates. 
         The GSA_AUTH messages are encrypted and integrity protected with keys established through the previous
         exchanges, so the identities are hidden from eavesdroppers and all
-        fields in all the messages are authenticated. The GCKS <bcp14>SHOULD</bcp14>
-        authorize group members to be allowed into the group as part of the
+        fields in all the messages are authenticated. The GCKS authorizes
+        group members to be allowed into the group as part of the
         GSA_AUTH exchange. Once the GCKS accepts a GM to join a
-        group it will provide the data security keys (TEKs) and/or group key
+        group it will provide the GM with the data security keys (TEKs) and/or group key
         encrypting key (KEK) as part of the GSA_AUTH response message. </t>
 
         <section anchor="gsa_auth" title="GSA_AUTH exchange">
@@ -520,8 +530,8 @@ GSA_REGISTRATION        |    |         GSA_REGISTRATION
           and optionally provide GM with the keys for Rekey SA. The set of payloads 
           in the GSA_AUTH exchange is slightly different, because policy is not
           negotiated between the group member and the GCKS, but instead
-          downloaded from the GCKS to the GM. <!--Note also, that GSA_AUTH 
-          has its own exchange type, which is different from the IKE_AUTH exchange type. -->
+          provided by the GCKS for the GM. Note also, that GSA_AUTH 
+          has its own exchange type, which is different from the IKE_AUTH exchange type.
           </t>
 
           <t>Note, that due to the similarities between IKE_AUTH and GSA_AUTH,
@@ -1076,7 +1086,7 @@ P = InnerPlds
             <t>Because GSA_REKEY messages are not acknowledged and could be
             discarded by the network, one or more GMs may not receive 
             the new policy. To mitigate such lost messages, during a rekey event the
-            GCKS may transmit several GSA_REKEY messages with the new
+            GCKS may transmit several copies of an encrypted GSA_REKEY message with the new
             policy. The retransmitted messages <bcp14>MUST</bcp14> be bitwise identical and <bcp14>SHOULD</bcp14> be
             sent within a short time interval (a few seconds) to ensure 
             that time-to-live would not be substantially skewed for the GMs that 
@@ -1103,8 +1113,8 @@ P = InnerPlds
             Message ID that the GM is expecting. The GM expects the Message ID
             in the first GSA_REKEY message it receives to be equal or greater
             than the Message ID it receives in the GSA_INITIAL_MESSAGE_ID attribute.
-            Note, that if no such attribute was received for the Rekey SA, the GM 
-            <bcp14>MUST</bcp14> assume zero as the first expected Message ID.
+            Note, that if the GSA_INITIAL_MESSAGE_ID attribute is not received for the Rekey SA, 
+            the GM <bcp14>MUST</bcp14> assume zero as the first expected Message ID.
             The GM expects the Message ID in subsequent GSA_REKEY messages to
             be greater than the last valid GSA_REKEY message ID it
             received.</t>
