@@ -52,9 +52,13 @@
       two components: member registration and group rekeying. Both components
       require a Group Controller/Key Server to download IPsec group security
       associations to authorized members of a group. The group members then
-      exchange IP multicast or other group traffic as IPsec packets. This
-      document obsoletes RFC 6407. This documents also updates RFC 7296 by
-      renaming one of transform types defined there.</t>
+      exchange IP multicast or other group traffic as IPsec packets.
+      </t>
+
+      <t> This document obsoletes RFC 6407. This documents also updates RFC 7296 by
+      renaming a transform type 5 from "Extended Sequence Numbers (ESN)" to the "Replay Protection (RP)" 
+      and by renaming IKEv2 authentication method 0 from "Reserved" to "NONE".
+      </t>
     </abstract>
   </front>
 
@@ -172,6 +176,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         <t> It is assumed that readers are familiar with the IPsec architecture <xref target="RFC4301" />,
         and its extension for multicast <xref target="RFC5374" />. This document defines an extension to the IKEv2 protocol 
         <xref target="RFC7296" />, so it is assumed that readers have an understanding of this protocol.
+        This document uses a notation and conventions from <xref target="RFC7296" /> for describing G-IKEv2 payloads and exchanges.
         </t>
 
         <t>The following key terms are used throughout this document (mostly borrowed from <xref target="RFC3740" />, 
@@ -380,9 +385,11 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         G-IKEv2 --> provides group authorizatiom, secure policy and keys download from the GCKS to GMs. 
         </t>
 
-        <t>G-IKEv2 is compatible with most IKEv2 extensions defined so far and it is believed that 
-        future IKEv2 extensions will also be possible to use with G-IKEv2. However, some IKEv2 extensions require 
-        special handling if used with G-IKEv2. See <xref target="ike_ext" /> for more details.</t>
+        <t>G-IKEv2 is compatible with most IKEv2 extensions defined so far. In particular, 
+        it is assumed that, if necessary, the IKE_INTERMEDIATE exchanges <xref target="RFC9242" /> may be utilized 
+        while establishing the registration SA. It is also believed that 
+        future IKEv2 extensions will be possible to use with G-IKEv2, however, some IKEv2 extensions require 
+        special handling when used with G-IKEv2. See <xref target="ike_ext" /> for more details.</t>
   
         <t>It is assumed that readers are familiar with the IKEv2 protocol, so
         this document skips many details that are described in <xref
@@ -679,7 +686,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           GCKS using the IKE_SA_INIT exchange and receives the response from
           the GCKS. This exchange is unchanged from the IKE_SA_INIT in IKEv2
           protocol. The IKE_SA_INIT exchange may optionally be followed 
-          by one or more the IKE_INTERMEDIATE <xref target="RFC9242" /> exchanges if the GM and the GCKS
+          by one or more the IKE_INTERMEDIATE exchanges if the GM and the GCKS
           negotiated using IKEv2 extensions based on this exchange.
           </t>
 
@@ -757,9 +764,9 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           Note, that this should normally not happen if the GM includes SAg payload 
           in the GSA_AUTH request and the GCKS takes it into account.
           Finally the KD payload is parsed providing the keying material for the TEK and/or KEK. 
-          The KD payload contains a list of key packets, where each key packet includes the
+          The KD payload contains a list of key bags, where each key bag includes the
           keying material for SAs distributed in the GSA payload. Keying
-          material is matched by comparing the SPIs in the key packets to SPIs
+          material is matched by comparing the SPIs in the key bags to SPIs
           previously included in the GSA payloads. Once TEK keys and policy
           are matched, the GM provides them to the data-security subsystem,
           and it is ready to send or receive packets matching the TEK
@@ -963,9 +970,9 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           <t> During group member registration, the GCKS
           sends the authentication key in the KD payload, AUTH_KEY attribute, 
           which the group member uses to authenticate the key
-          server. Before the current Authentication Key expires, the GCKS will
+          server. Before the current authentication key expires, the GCKS will
           send a new AUTH_KEY to the group members in a GSA_REKEY message.
-          The AUTH key that is sent in the rekey message may be not the same
+          The authentication key that is sent in the rekey message may be not the same
           as the authentication key sent during the GM registration. If implicit authentication
           is used, then AUTH_KEY <bcp14>MUST NOT</bcp14> be sent to GMs.</t>
 
@@ -1071,9 +1078,9 @@ P = InnerPlds
               fragmentation on large GSA_REKEY messages.</t>
 
               <t>The GCKS must always use IKE fragmentation based on a pre-configured
-              fragmentation threshold (unspecified in this memo), as there
-              is no way to check if fragmentation is needed by first sending
-              unfragmented messages and waiting for response.</t>
+              fragmentation threshold, as there is no way to check if fragmentation is needed by first sending
+              unfragmented messages and waiting for response. Section 2.5.1 of <xref target="RFC7383" />
+              contains recommendation on selecting the fragmentation threshold.</t>
 
               <t>PMTU mechanism, defined in Section 2.5.2 of <xref target="RFC7383" />, 
               cannot be used due to lack of GSA_REKEY response messages.</t>
@@ -1890,7 +1897,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
             <t>GSA policy is defined by means of transforms in the GSA policy substructure.
             For this purpose the transforms defined in <xref target="RFC7296" />
             are used. In addition, new transform types are defined for using in G-IKEv2:
-            Authentication Method (AUTH) <!-- XXXX , Encapsulation Mode (MODE) --> 
+            Authentication Method (AUTHMETH) <!-- XXXX , Encapsulation Mode (MODE) --> 
             and Group Key Management Method (GKM), see <xref target="IANA" />.
             </t>
 
@@ -1898,11 +1905,11 @@ GSK_e | GSK_a | GSK_w = KEYMAT
 
             <figure align="center" anchor="allowed_transforms" title="Valid Transform Types">
               <artwork align="left"><![CDATA[
-Protocol    Mandatory Types                   Optional Types
-------------------------------------------------------------
-GIKE_REKEY  ENCR, INTEG*, PRF, AUTH**, GKM**
-ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                             INTEG, RP
-AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                             RP
+Protocol    Mandatory Types                       Optional Types
+----------------------------------------------------------------
+GIKE_REKEY  ENCR, INTEG*, PRF, AUTHMETH**, GKM**
+ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 INTEG, RP
+AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 RP
               ]]></artwork>
             </figure>
 
@@ -1915,7 +1922,7 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                   
             </t>
 
             <section anchor="auth_method" title="Authentication Method Transform">
-              <t>The Authentication Method (AUTH) transform is used in the GIKE_REKEY
+              <t>The Authentication Method (AUTHMETH) transform is used in the GIKE_REKEY
               policy to convey information of how GCKS will authenticate the GSA_REKEY messages.
               This values are from the IKEv2 Authentication Method registry <xref target="IKEV2-IANA"></xref>.
               Note, that this registry defines only values in a range 0-255, so even that Transform ID field
@@ -2240,7 +2247,7 @@ GAP_SENDER_ID_BITS          3       B       N
 | Next Payload  |C|  RESERVED   |            Length             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-~                         <Key Packets>                         ~
+~                           <Key Bags>                          ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
           ]]></artwork>
@@ -2253,12 +2260,12 @@ GAP_SENDER_ID_BITS          3       B       N
          <t>Next Payload, C, RESERVED, Payload Length fields comprise the IKEv2 Generic Payload Header and
          are defined in Section 3.2. of <xref target="RFC7296"></xref>.</t>
 
-          <t>Key Packets (variable) -- Contains Group Key Packet and Member Key Packet substructures. Each Key Packet contains 
+          <t>Key Bags (variable) -- Contains the Group Key Bag and the Member Key Bag substructures. Each key bag contains 
           keys for a single group rekey or Data-Security SA or keys and security parameters for a GM.
           </t>
         </list>
 
-        Two types of Key Packets are used -- Group Key Packet and Member Key Packet. 
+        Two types of key bags are used -- group key bag and member key bag. 
         </t>
 
         <section anchor="wrapped_key" title="Wrapped Key Format">
@@ -2330,12 +2337,12 @@ GAP_SENDER_ID_BITS          3       B       N
           </t>
         </section>
 
-        <section anchor="group_key_packet" title="Group Key Packet Substructure">
-          <t>Group Key Packet substructure contains SA key information. This key information is associated 
+        <section anchor="group_key_bag" title="Group Key Bag Substructure">
+          <t>The Group Key Bag substructure contains SA key information. This key information is associated 
           with some group SAs: either with Data-Security SAs or with group Rekey SA.
           </t>
 
-          <figure title="Group Key Packet Substructure Format" anchor="group_key_packet_format">
+          <figure title="Group Key Bag Substructure Format" anchor="group_key_bag_format">
             <preamble></preamble>
             <artwork align="center"><![CDATA[
                      1                   2                   3
@@ -2348,7 +2355,7 @@ GAP_SENDER_ID_BITS          3       B       N
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-~                <Group Key Packet Attributes>                  ~
+~                  <Group Key Bag Attributes>                   ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
               ]]></artwork>
@@ -2356,10 +2363,10 @@ GAP_SENDER_ID_BITS          3       B       N
           </figure>
 
           <t><list style="symbols">
-            <t>Protocol (1 octet) -- Identifies the security protocol for this key packet.
+            <t>Protocol (1 octet) -- Identifies the security protocol for this key bag.
             The values are defined in the IKEv2 Security Protocol Identifiers in 
             <xref target="IKEV2-IANA" />. The valid values for this field are:
-            &lt;TBA&gt; (GIKE_REKEY) for KEK Key packet and 2 (AH) or 3 (ESP) for TEK key packet.
+            &lt;TBA&gt; (GIKE_REKEY) for KEK Key packet and 2 (AH) or 3 (ESP) for TEK key bag.
             </t>
 
             <t>SPI Size (1 octet) -- Size of Security Parameter Index (SPI) for the corresponding SA.
@@ -2379,19 +2386,19 @@ GAP_SENDER_ID_BITS          3       B       N
             field in the IKEv2 header) uniquely identify the Rekey SA.
             </t>
 
-            <t>Group Key Packet Attributes (variable) -- Contains Key
+            <t>Group Key Bag Attributes (variable) -- Contains Key
             information for the corresponding SA.
             </t>
           </list>
           </t>
 
           <t>This document creates a new IKEv2 IANA registry for the types
-          of the Group Key Packet attributes which is initially filled as described in <xref target="IANA" />.
+          of the Group Key Bag attributes which is initially filled as described in <xref target="IANA" />.
           In particular, the following attributes are initially added.
 
           <figure>
             <artwork align="center"><![CDATA[
-Group Key Packet
+Group Key Bag
 Attributes          Value   Type    Multiple    Protocol
 ----------------------------------------------------------
 Reserved            0
@@ -2419,12 +2426,12 @@ SA_KEY              1       V       N/Y*        GIKE_REKEY,
             from this keying material (see <xref target="group_sa_keys" />) for the corresponding SA.
             </t>
 
-            <t>If the Key Packet is for a Data-Security SA (AH or ESP protocols), 
+            <t>If the key bag is for a Data-Security SA (AH or ESP protocols), 
             then exactly one SA_KEY attribute <bcp14>MUST</bcp14> be present with both
             Key ID and KWK ID fields set to zero.
             </t>
 
-            <t>If the Key Packet is for a Rekey SA (GIKE_REKEY protocol), 
+            <t>If the key bag is for a Rekey SA (GIKE_REKEY protocol), 
             then in the GSA_AUTH, GSA_REGISTRATION and GSA_INBAND_REKEY exchanges 
             exactly one SA_KEY attribute<!-- with zero Key ID--> <bcp14>MUST</bcp14> be present.
             In the GSA_REKEY exchange at least one SA_KEY attribute <bcp14>MUST</bcp14> be present, 
@@ -2433,13 +2440,13 @@ SA_KEY              1       V       N/Y*        GIKE_REKEY,
           </section>
         </section>
 
-        <section anchor="member_key_packet" title="Member Key Packet Substructure" >
-          <t>The Member Key Packet substructure contains keys and other
+        <section anchor="member_key_bag" title="Member Key Bag Substructure" >
+          <t>The Member Key Bag substructure contains keys and other
           parameters that are specific for a member of the group and are not
           associated with any particular group SA.
           </t>
 
-          <figure title="Member Key Packet Substructure Format" anchor="mkd_key_packet">
+          <figure title="Member Key Bag Substructure Format" anchor="mkd_key_bag">
             <preamble></preamble>
             <artwork><![CDATA[
                      1                   2                   3
@@ -2448,18 +2455,18 @@ SA_KEY              1       V       N/Y*        GIKE_REKEY,
 |    Protocol   |   RESERVED    |            Length             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-~                  <Member Key Packet Attributes>               ~
+~                    <Member Key Bag Attributes>                ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
              ]]></artwork>
             <postamble></postamble>
           </figure>
 
-          <t>The Member Key Packet substructure fields are defined as follows:</t>
+          <t>The Member Key Bag substructure fields are defined as follows:</t>
 
           <t><list style="symbols">
              <t>Protocol (1 octet) -- <bcp14>MUST</bcp14> be zero. This value is reserved in <xref target="IANA" /> and is never
-             used for any security protocol, so it is used here to indicate that this Key Packet is not associated
+             used for any security protocol, so it is used here to indicate that this key bag is not associated
              with any particular SA.
              </t>
 
@@ -2469,23 +2476,23 @@ SA_KEY              1       V       N/Y*        GIKE_REKEY,
             <t>Length (2 octets, unsigned integer) -- Length of this substructure including the header.
             </t>
 
-            <t>Member Key Packet Attributes (variable) -- Contains Key
+            <t>Member Key Bag Attributes (variable) -- Contains Key
             information and other parameters exclusively for a particular member of the group.
             </t>
           </list>
 
-          Member Key Packet substructure contains sensitive information for a single GM, for this reason
+          The member Key Bag substructure contains sensitive information for a single GM, for this reason
           it <bcp14>MUST NOT</bcp14> be sent in GSA_REKEY messages and <bcp14>MUST</bcp14> only be sent via unicast
           SA at the time the GM registers to the group (in either GSA_AUTH or GSA_REGISTRATION exchanges).
           </t>
 
           <t>This document creates a new IKEv2 IANA registry for the types
-          of the Member Key Packet attributes which is initially filled as described in <xref target="IANA" />.
+          of the Member Key Bag attributes which is initially filled as described in <xref target="IANA" />.
           In particular, the following attributes are initially added.
 
           <figure>
             <artwork align="center"><![CDATA[
-Member Key Packet
+Member Key Bag
 Attributes              Value   Type    Multiple
 ------------------------------------------------
 Reserved                0
@@ -2518,7 +2525,7 @@ GM_SENDER_ID            3       V       Y
             key size for this algorithm.
             </t>
 
-            <t>Multiple instances of the WRAP_KEY attributes <bcp14>MAY</bcp14> be present in the key packet.
+            <t>Multiple instances of the WRAP_KEY attributes <bcp14>MAY</bcp14> be present in the key bag.
             </t>
           </section>
 
@@ -2574,7 +2581,7 @@ GM_SENDER_ID            3       V       Y
 
 <!--
         <section anchor="lkh_download" title="LKH Download Type">
-          <t>The LKH key packet is comprised of attributes representing
+          <t>The LKH key bag is comprised of attributes representing
           different leaves in the LKH key tree.</t>
 
           <t>The following attributes are used to pass an LKH KEK array in the
@@ -3187,11 +3194,11 @@ Private Use            16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "Group Key Packet Attributes". The initial values of the new registry are:
+        <t>This document creates a new IANA registry "Group Key Bag Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-Group Key Packet
+Group Key Bag
 Attributes          Value   Type    Multiple    Protocol
 ------------------------------------------------------------
 Reserved            0
@@ -3204,11 +3211,11 @@ Private Use    16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "Member Key Packet Attributes". The initial values of the new registry are:
+        <t>This document creates a new IANA registry "Member Key Bag Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-Member Key Packet
+Member Key Bag
 Attributes              Value   Type    Multiple
 ------------------------------------------------
 Reserved                0
@@ -3251,7 +3258,7 @@ Value       Next Payload Type               Notation
 
         <t>This document makes the following changes to the "Transform Type Values" registry:
         <list style="symbols" >
-          <t>Defines two new transform types -- "Authentication Method (AUTH)" and "Group Key Management Method (GKM)";</t>
+          <t>Defines two new transform types -- "Authentication Method (AUTHMETH)" and "Group Key Management Method (GKM)";</t>
           <t>Renames existing transform type "Extended Sequence Numbers (ESN)" to "Replay Protection (RP)";</t>
           <t>Changes the "Used In" column for the existing allocations as follows;</t>
         </list>
@@ -3265,7 +3272,7 @@ Type  Description                          Used In
                                            optional in ESP
 4     Diffie-Hellman Group (D-H)           IKE, optional in AH, ESP
 5     Replay Protection (RP)               AH and ESP
-<TBA> Authentication Method (AUTH)         GIKE_REKEY
+<TBA> Authentication Method (AUTHMETH)     GIKE_REKEY
 <TBA> Group Key Management Method (GKM)    GIKE_REKEY
 ]]><!-- XXXX <![CDATA[<TBA> Encapsulation Mode (MODE)             (AH and ESP)
           ]]> --></artwork>
@@ -3506,12 +3513,12 @@ Protocol ID       Protocol
         </t>
 
         <t>The content of the KD payload will be shown as a sequence
-        of Key Packets. The Group Key Packet substructure will be denoted as GP(SAn)(),
-        when n is an SPI for the SA, and the Member Key Packet substructure
-        will be denoted as MP(). The content of the Key Packets 
+        of key bags. The Group Key Bag substructure will be denoted as GP(SAn)(),
+        when n is an SPI for the SA, and the Member Key Bag substructure
+        will be denoted as MP(). The content of the key bags 
         is shown as SA_KEY and WRAP_KEY attributes with the notation
         described above. For simplicity the type of the attribute will not be shown,
-        because it is implicitly defined by the type of Key Packet.
+        because it is implicitly defined by the type of key bag.
         </t>
 
         <t> Here is the example of KD payload.
@@ -3584,7 +3591,7 @@ E: 2->5->11     F: 2->5->12     G: 2->6->13     H: 2->6->14
 
       <section title="Simple Group SA Rekey">
         <t>If the GCKS performs a simple SA rekey without changing group membership,
-        it will only send Group Key Packet in the KD payload with a new
+        it will only send group key bag in the KD payload with a new
         SA key encrypted with the default KWK.
 
         <figure align="center" title="KD Payload for the Simple Group SA Rekey">
