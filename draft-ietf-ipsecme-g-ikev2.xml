@@ -6,7 +6,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-12" ipr="trust200902" updates="7296" obsoletes="6407">
+<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-13" ipr="trust200902" updates="7296" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -292,7 +292,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           <dd>The symmetric cipher key used to protect another key.
           </dd>
 
-          <dt>Group Associated Policy (GAP)</dt>
+          <dt>Group-Wise (GW) policy</dt>
           <dd>Group-wide policy not related to a particular SA.
           </dd>
 
@@ -792,8 +792,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
 
           <t>The GSA payload contains the security policy and cryptographic
           protocols used by the group. This policy describes the optional Rekey SA
-          (KEK), Data-Security SAs (TEK), and optional Group Associated policy
-          (GAP). If the policy in the GSA payload is not acceptable to the GM,
+          (KEK), Data-Security SAs (TEK), and optional Group-Wise (GW) policy. 
+          If the policy in the GSA payload is not acceptable to the GM,
           it <bcp14>SHOULD</bcp14> notify the GCKS by initiating a GSA_REGISTRATION exchange 
           with a NO_PROPOSAL_CHOSEN Notify payload (see <xref target="gsa_registration"></xref>). 
           Note, that this should normally not happen if the GM includes SAg payload 
@@ -859,8 +859,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           to the group members if this Message ID is non-zero. This Message ID is used to prevent GSA_REKEY 
           message replay attacks and will be increased each time a GSA_REKEY message is sent
           to the group. The GCKS data traffic policy is included in the GSA
-          TEK and keys are included in the KD TEK. The GAP <bcp14>MAY</bcp14> also be
-          included to provide the ATD and/or DTD (<xref target="gap_attr_atd_dtd"></xref>) 
+          TEK and keys are included in the KD TEK. The GW policy <bcp14>MAY</bcp14> also be
+          included to provide the ATD and/or DTD (<xref target="gwp_attr_atd_dtd"></xref>) 
           specifying activation and deactivation
           delays for SAs generated from the TEKs. If the group member has
           indicated that it is a sender of data traffic and one or more Data
@@ -1396,12 +1396,12 @@ GM (Responder)                GCKS (Initiator)
           <t>A GM applies the Sender-ID to Data-Security SA as follows.
           <list style="symbols">
 
-          <t>The most significant bits of the IV indicated in the GAP_SENDER_ID_BITS attribute (<xref target="gap_attr_sid_bits" />) are
+          <t>The most significant bits of the IV indicated in the GWP_SENDER_ID_BITS attribute (<xref target="gwp_attr_sid_bits" />) are
           taken to be the Sender-ID field of the IV.</t>
 
           <t>The Sender-ID is placed in the least significant bits of the Sender-ID
           field, where any unused most significant bits are set to zero.
-          If the Sender-ID value doesn't fit into the number of bits from the GAP_SENDER_ID_BITS attributes,
+          If the Sender-ID value doesn't fit into the number of bits from the GWP_SENDER_ID_BITS attributes,
           then the GM <bcp14>MUST</bcp14> treat this as a fatal error and re-register to the group.
           </t>
 
@@ -1768,12 +1768,12 @@ GSK_e | GSK_a | GSK_w = KEYMAT
     
         <section anchor="group_policy" title="Group Policies">
           <t>Group policies are comprised of two types of policy -- Group SA (GSA) policy
-          and Group Associated policy (GAP). GSA policy defines parameters 
+          and Group-Wise (GW) policy. GSA policy defines parameters 
           for the Security Association for the group. Depending on the 
           employed security protocol GSA policies may further be classified as
           Rekey SA policy (GSA KEK) and Data-Security SA policy (GSA TEK).
           GSA payload may contain zero or one GSA KEK policy, zero or more GSA TEK policies, 
-          and zero or one GAP, where either one GSA KEK or GSA TEK policy <bcp14>MUST</bcp14> be present.</t>
+          and zero or one GW policy, where either one GSA KEK or GSA TEK policy <bcp14>MUST</bcp14> be present.</t>
 
           <t>This latitude allows various group policies to be accommodated.
           For example if the group policy does not require the use of a Rekey
@@ -1788,14 +1788,14 @@ GSK_e | GSK_a | GSK_w = KEYMAT
           (e.g., video, audio, and text) to be associated with a session, but
           each protected with an individual security association policy.</t>
 
-          <t>A GAP allows for the distribution of group-wise policy,
+          <t>A GW policy allows for the distribution of group-wise policy,
           such as instructions for when to activate and de-activate SAs.</t>
 
           <t>Policies are distributed in substructures to the GSA payload.
           The format of the substructures is defined below in <xref target="gsa_policy" />
-          (for GSA policy) and in <xref target="ga_policy" /> (for GAP).
+          (for GSA policy) and in <xref target="gw_policy" /> (for GW policy).
           The first octet of the substructure unambiguously determines its type -- 
-          it is zero for GAP and non-zero (actually, it is a security protocol ID)
+          it is zero for GW policy and non-zero (actually, it is a security protocol ID)
           for GSA policies.
           </t>
         </section>
@@ -2157,13 +2157,13 @@ GSA_NEXT_SPI            3      TLV    YES           GIKE_REKEY, AH, ESP
           </section>
         </section>
 
-        <section title="Group Associated Policy Substructure"  anchor="ga_policy">
+        <section title="Group-Wise Policy Substructure"  anchor="gw_policy">
           <t>Group specific policy that does not belong to any SA policy can be distributed to
-          all group member using Group Associated Policy (GAP) substructure.</t>
+          all group member using Group-Wise (GW) policy substructure.</t>
 
-          <t>The GAP substructure is defined as follows:</t>
+          <t>The GW policy substructure is defined as follows:</t>
 
-          <figure title="GAP Substructure Format" anchor="gap_format">
+          <figure title="GW Policy Substructure Format" anchor="gwp_format">
             <preamble></preamble>
               <artwork><![CDATA[
                      1                   2                   3
@@ -2172,14 +2172,14 @@ GSA_NEXT_SPI            3      TLV    YES           GIKE_REKEY, AH, ESP
 |    Protocol   |   RESERVED    |            Length             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
-~                        <GAP Attributes>                       ~
+~                      <GW Policy Attributes>                   ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
               ]]></artwork>
             <postamble></postamble>
           </figure>
 
-          <t>The GAP substructure fields are defined as follows:</t>
+          <t>The GW policy substructure fields are defined as follows:</t>
 
           <t><list style="symbols">
             <t>Protocol (1 octet) -- <bcp14>MUST</bcp14> be zero. This value is reserved in <xref target="IANA" /> and is never
@@ -2193,25 +2193,25 @@ GSA_NEXT_SPI            3      TLV    YES           GIKE_REKEY, AH, ESP
             <t>Length (2 octets, unsigned integer) -- Length of this substructure including the header.
             </t>
 
-            <t>GAP Attributes (variable) -- Contains policy attributes associated
+            <t>GW Policy Attributes (variable) -- Contains policy attributes associated
             with no specific SA. The following sections describe possible
             attributes. Any or all attributes may be optional, depending on
             the group policy.</t>
           </list></t>
 
-          <section anchor="gap_attr" title="GAP Attributes">
+          <section anchor="gwp_attr" title="GW Policy Attributes">
               <t>This document creates a new IKEv2 IANA registry for the types
-              of the GAP attributes which is initially filled as described in <xref target="IANA" />.
+              of the Group-Wise Policy attributes which is initially filled as described in <xref target="IANA" />.
               In particular, the following attributes are initially added.
 
           <figure>
             <artwork align="center"><![CDATA[
-GAP Attributes              Value  Format  Multi-Valued
+GW Policy Attributes        Value  Format  Multi-Valued
 --------------------------------------------------------
 Reserved                    0
-GAP_ATD                     1      TV      NO
-GAP_DTD                     2      TV      NO
-GAP_SENDER_ID_BITS          3      TV      NO
+GWP_ATD                     1      TV      NO
+GWP_DTD                     2      TV      NO
+GWP_SENDER_ID_BITS          3      TV      NO
             ]]></artwork>
           </figure>
           </t>
@@ -2220,13 +2220,13 @@ GAP_SENDER_ID_BITS          3      TV      NO
               target="RFC7296"></xref> section 3.3.5.
               </t>
     
-              <section anchor="gap_attr_atd_dtd" title="GAP_ATD And GAP_DTD Attributes">
+              <section anchor="gwp_attr_atd_dtd" title="GWP_ATD And GWP_DTD Attributes">
                 <t>Section 4.2.1 of Multicast Extensions to the Security Architecture <xref target="RFC5374" /> specifies a key rollover method that
                 requires two values be provided to group members -- Activation Time Delay (ATD) and
                 Deactivation Time Delay (DTD).
                 </t>
     
-                <t>The GAP_ATD attribute (1) allows a GCKS to set the
+                <t>The GWP_ATD attribute (1) allows a GCKS to set the
                 Activation Time Delay for Data-Security SAs of the group. The ATD
                 defines how long active members of the group (those who sends traffic) 
                 should wait after receiving new SAs before staring sending traffic over them.
@@ -2234,15 +2234,15 @@ GAP_SENDER_ID_BITS          3      TV      NO
                 activate the SAs immediately once they receive them.
                 </t>
     
-                <t>The GAP_DTD attribute (2) allows the GCKS to set the
+                <t>The GWP_DTD attribute (2) allows the GCKS to set the
                 Deactivation Time Delay for previously distributed SAs. The
                 DTD defines how long after receiving a request to delete Data-Security SAs
                 passive group members should wait before actually deleting them.
                 Note that active members of the group should stop sending traffic over these old SAs
-                once new replacement SAs are activated (after time specified in the GAP_ATD attribute).
+                once new replacement SAs are activated (after time specified in the GWP_ATD attribute).
                 </t>
     
-                <t>The GAP_ATD and GAP_DTD attributes contain 16 bit unsigned integer in a 
+                <t>The GWP_ATD and GWP_DTD attributes contain 16 bit unsigned integer in a 
                 network byte order, specifying the delay in seconds. These attributes are OPTIONAL. 
                 If one of them or both are not sent by the GCKS, then no corresponding delay
                 should be employed.
@@ -2250,8 +2250,8 @@ GAP_SENDER_ID_BITS          3      TV      NO
                 </t>
               </section>
     
-              <section anchor="gap_attr_sid_bits" title="GAP_SENDER_ID_BITS Attribute">
-                <t>The GAP_SENDER_ID_BITS attribute (3) declares how many bits of the
+              <section anchor="gwp_attr_sid_bits" title="GWP_SENDER_ID_BITS Attribute">
+                <t>The GWP_SENDER_ID_BITS attribute (3) declares how many bits of the
                 cipher nonce are taken to represent a Sender-ID value. The bits are
                 applied as the most significant bits of the IV, as shown in Figure 1 of 
                 Using Counter Modes with ESP and AH to Protect Group Traffic <xref target="RFC6054"></xref> and specified in 
@@ -2911,17 +2911,6 @@ ARX_KW                          2
           </t>
         </section>
 
-        <section anchor="rekey_needed" title="REKEY_IS_NEEDED Notification">
-          <t>REKEY_IS_NEEDED (&lt;TBA&gt;) is a new status type notification that is sent in the 
-          GSA_AUTH response message to indicate that the GM has to
-          perform an immediate rekey of IKE SA to make it secure against
-          quantum computers and then start a registration request over.
-          The Protocol ID and SPI Size fields in the Notify payload <bcp14>MUST</bcp14> be zero.
-          There is no data associated with this notification and the content of the 
-          Notification Data field <bcp14>MUST</bcp14> be ignored on receipt.
-          </t>
-        </section>
-
 <!--
         <section anchor="tunnel" title="USE_TRANSPORT_MODE Notification">
           <t>This specification uses the USE_TRANSPORT_MODE notification defined in section 3.10.1 of
@@ -3008,22 +2997,22 @@ ARX_KW                          2
             <td align="center"></td>
           </tr>
           <tr>
-            <th colspan="4" align="center">GAP Attributes (<xref target="gap_attr" />)</th>
+            <th colspan="4" align="center">GW Policy Attributes (<xref target="gwp_attr" />)</th>
           </tr>
           <tr>
-            <td>GAP_ATD</td>
+            <td>GWP_ATD</td>
             <td align="center">[S]</td>
             <td align="center">[S]</td>
             <td align="center"></td>
           </tr>
           <tr>
-            <td>GAP_DTD</td>
+            <td>GWP_DTD</td>
             <td align="center">[S]</td>
             <td align="center">[S]</td>
             <td align="center"></td>
           </tr>
           <tr>
-            <td>GAP_SENDER_ID_BITS</td>
+            <td>GWP_SENDER_ID_BITS</td>
             <td align="center">S</td>
             <td align="center">-</td>
             <td align="center">1</td>
@@ -3063,7 +3052,7 @@ ARX_KW                          2
                   Notes:
                   <list style="hanging" hangIndent="6" >
                     <t hangText = "(1)" >
-                    The GAP_SENDER_ID_BITS attribute <bcp14>MUST</bcp14> be present if the GCKS policy includes at least one 
+                    The GWP_SENDER_ID_BITS attribute <bcp14>MUST</bcp14> be present if the GCKS policy includes at least one 
                     cipher in counter mode of operation and the GM included the SENDER notify into the registration request. 
                     Otherwise it <bcp14>MUST NOT</bcp14> be present. At least one GM_SENDER_ID attribute <bcp14>MUST</bcp14> be present 
                     in the former case (and more <bcp14>MAY</bcp14> be present if the GM requested more Sender-IDs) 
@@ -3127,22 +3116,22 @@ ARX_KW                          2
             <td align="center"></td>
           </tr>
           <tr>
-            <th colspan="4" align="center">GAP Attributes (<xref target="gap_attr" />)</th>
+            <th colspan="4" align="center">GW Policy Attributes (<xref target="gwp_attr" />)</th>
           </tr>
           <tr>
-            <td>GAP_ATD</td>
+            <td>GWP_ATD</td>
             <td align="center">[S]</td>
             <td align="center">[S]</td>
             <td align="center"></td>
           </tr>
           <tr>
-            <td>GAP_DTD</td>
+            <td>GWP_DTD</td>
             <td align="center">[S]</td>
             <td align="center">[S]</td>
             <td align="center"></td>
           </tr>
           <tr>
-            <td>GAP_SENDER_ID_BITS</td>
+            <td>GWP_SENDER_ID_BITS</td>
             <td align="center">S</td>
             <td align="center">-</td>
             <td align="center">1</td>
@@ -3182,7 +3171,7 @@ ARX_KW                          2
                     Notes:
                     <list style="hanging" hangIndent="6" >
                       <t hangText = "(1)" >
-                      The GAP_SENDER_ID_BITS attribute <bcp14>MUST</bcp14> be present if the GCKS policy includes at least one 
+                      The GWP_SENDER_ID_BITS attribute <bcp14>MUST</bcp14> be present if the GCKS policy includes at least one 
                       cipher in counter mode of operation and the GM included the SENDER notify into the registration request. 
                       Otherwise it <bcp14>MUST NOT</bcp14> be present. At least one GM_SENDER_ID attribute <bcp14>MUST</bcp14> be present 
                       in the former case (and more <bcp14>MAY</bcp14> be present if the GM requested more Sender-IDs) 
@@ -3214,93 +3203,24 @@ ARX_KW                          2
       </t>
 
       <section title="Mixing Preshared Keys in IKEv2 for Post-quantum Security">
-        <t>G-IKEv2 can take advantage of the protection provided by
+
+        <t> G-IKEv2 can take advantage of the protection provided by
         Postquantum Preshared Keys (PPK) for IKEv2 <xref
         target="RFC8784"></xref>. However, the use of 
         PPK leaves the initial IKE SA susceptible to quantum
-        computer (QC) attacks. While group SA keys are protected with 
-        the default KWK (GSK_w), which is derived from SK_d and thus
-        cannot be broken even by attacker equipped with a QC, authentication 
-        of these keys relies on authentication of IKE SA messages, which is not 
-        secure against QC until the initial IKE SA is rekeyed. 
-        In additional, the other content of IKE SA messages may also 
-        be visible to an attacker with a QC. See Section 6 of <xref target="RFC8784" /> for details.
+        computer (QC) attacks. Group SA keys are protected with 
+        the default KWK (GSK_w), which is derived from SK_d and thus 
+        cannot be broken even by attacker equipped with a QC.
+        However, other data sent over the initial IKE SA may 
+        be susceptible to an attacker equipped with a QC of a sufficient size. Such an attacker can store all the traffic 
+        until it obtains such a QC and then decrypt it (Store Now Decrypt Later attack).
+        See Section 6 of <xref target="RFC8784" /> for details.
         </t>
 
-        <t>GCKS implementations that care about these issues <bcp14>MUST NOT</bcp14> send GSA and KD payloads in the GSA_AUTH response message
-        and <bcp14>MUST</bcp14> return a new notification REKEY_IS_NEEDED instead.
-        Upon receiving this notification in the GSA_AUTH response
-        the GM <bcp14>MUST</bcp14> perform an IKE SA rekey and then initiate a new GSA_REGISTRATION
-        request for the same group. This is illustrated below.
+        <t>While the group keys are protected with PPK and thus are immune to QC, GCKS implementations that care about other data sent over initial IKE SA 
+        <bcp14>MUST</bcp14> rely on IKEv2 extensions that protect even initial IKE SA against QC
+        (like <xref target="I-D.ietf-ipsecme-ikev2-qr-alt" />).
         </t>
-
-        <t>The GM starts the IKE_SA_INIT exchange requesting using PPK, and the GCKS responds with agreement to do it:</t>
-
-        <figure title="IKE_SA_INIT Exchange requesting using PPK" anchor="ike_sa_init_ppk">
-          <preamble></preamble>
-          <artwork><![CDATA[
- Initiator (GM)                    Responder (GCKS)
---------------------              ------------------
- HDR, SAi1, KEi, Ni, N(USE_PPK)  -->
-                              <--  HDR, SAr1, KEr, Nr, [CERTREQ],
-                                   N(USE_PPK)
-          ]]></artwork>
-          <postamble></postamble>
-        </figure>
-
-        <t>The GM then starts the GSA_AUTH exchange with the PPK_ID; if using PPK is not mandatory for the GM, 
-        the NO_PPK_AUTH notification is included in the request:</t>
-
-        <figure title="GSA_AUTH Request using PPK" anchor="gsa_auth_ppk">
-          <preamble></preamble>
-          <artwork><![CDATA[
- Initiator (GM)                    Responder (GCKS)
---------------------              ------------------
- HDR, SK{IDi, AUTH, IDg, 
- [SAg,] [N(SENDER),]
- N(PPK_IDENTITY), N(NO_PPK_AUTH)}  -->
-          ]]></artwork>
-          <postamble></postamble>
-        </figure>
-
-        <t>Assuming the GCKS has the proper PPK it continues with a request to the GM 
-        to immediately perform a rekey by sending the REKEY_IS_NEEDED notification:</t>
-
-        <figure title="GSA_AUTH Response using PPK" anchor="gsa_auth_response_ppk">
-          <preamble></preamble>
-          <artwork><![CDATA[
- Initiator (GM)                   Responder (GCKS)
---------------------             ------------------
-                             <--  HDR, SK{IDr, AUTH, N(PPK_IDENTITY),
-                                  N(REKEY_IS_NEEDED) }
-          ]]></artwork>
-          <postamble></postamble>
-        </figure>
-
-        <t>The GM initiates the CREATE_CHILD_SA exchange to rekey the initial IKE SA and then makes a new
-        registration request for the same group over the new IKE SA4 the GM also have to delete initial SA:</t>
-
-        <figure title="Rekeying IKE SA followed by GSA_REGISTRATION Exchange" anchor="ppk_rekey">
-          <preamble></preamble>
-          <artwork><![CDATA[
- Initiator (GM)                    Responder (GCKS)
---------------------              ------------------
-                   <initial IKE SA>
- HDR, SK{SA, Ni, KEi}  -->
-                              <--  HDR, SK{SA, Nr, KEr}
- HDR, SK{D}  -->
-                              <--  HDR, SK{}
-                  <new IKE SA>
- HDR, SK{IDg, [SAg,] [N(SENDER)]} --->
-                              <--  HDR, SK{GSA, KD}
-          ]]></artwork>
-          <postamble></postamble>
-        </figure>
-
-        <t>Note, that <xref target="I-D.ietf-ipsecme-ikev2-qr-alt" /> <bcp14>MAY</bcp14> be used
-        to make the initial IKE SA secure against QC.
-        </t>
-
       </section>
     </section>
 
@@ -3422,16 +3342,16 @@ Private Use        16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "GAP Attributes". The initial values of the new registry are:
+        <t>This document creates a new IANA registry "Group-Wise Policy Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-GAP Attributes              Value  Format   Multi-Valued
+GW Policy Attributes        Value  Format   Multi-Valued
 --------------------------------------------------------
 Reserved                    0
-GAP_ATD                     1      TV       NO
-GAP_DTD                     2      TV       NO
-GAP_SENDER_ID_BITS          3      TV       NO
+GWP_ATD                     1      TV       NO
+GWP_DTD                     2      TV       NO
+GWP_SENDER_ID_BITS          3      TV       NO
 Unassigned                 4-16383
 Private Use            16384-32767
           ]]></artwork>
