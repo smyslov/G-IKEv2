@@ -6,7 +6,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-13" ipr="trust200902" updates="7296" obsoletes="6407">
+<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-14" ipr="trust200902" updates="7296" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -68,7 +68,7 @@
       <xref target="RFC7296"></xref> called G-IKEv2, which allows performing a group key
       management. A group key management protocol provides IPsec keys and policy to a
       set of IPsec devices which are authorized to communicate using a Group
-      Security Association (GSA) defined in Multicat Group Security Architecture <xref target="RFC3740"></xref>.
+      Security Association (GSA) defined in Multicast Group Security Architecture <xref target="RFC3740"></xref>.
       The data communications within the group (e.g., IP multicast packets)
       are protected by a key pushed to the group members (GMs) by the Group
       Controller/Key Server (GCKS). </t>
@@ -204,7 +204,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         This document uses a notation and conventions from IKEv2 <xref target="RFC7296" /> for describing G-IKEv2 payloads and exchanges.
         </t>
 
-        <t>The following key terms are used throughout this document (mostly borrowed from Multicat Group Security Architecture <xref target="RFC3740" />, 
+        <t>The following key terms are used throughout this document (mostly borrowed from Multicast Group Security Architecture <xref target="RFC3740" />, 
            Multicast Extensions to the Security Architecture <xref target="RFC5374" /> and GDOI <xref target="RFC6407" />).</t>
 
         <dl anchor="definitions" newline="true">
@@ -1862,9 +1862,9 @@ GSK_e | GSK_a | GSK_w = KEYMAT
             In case of GIKE_REKEY the SPI is the IKEv2 Header SPI pair where the
             first 8 octets become the "Initiator's SPI" field in the
             G-IKEv2 rekey message IKEv2 HDR, and the second 8 octets become
-            the "Responder's SPI" in the same HDR. When selecting SPI the GCKS
+            the "Responder's SPI" in the same HDR. <!-- When selecting SPI the GCKS
             <bcp14>MUST</bcp14> make sure that the sole first 8 octets (corresponding to "Initiator's SPI" 
-            field in the IKEv2 header) uniquely identify the Rekey SA.
+            field in the IKEv2 header) uniquely identify the Rekey SA. -->
             </t>
 
             <t>Source &amp; Destination Traffic Selectors (variable) -- 
@@ -2360,9 +2360,9 @@ GWP_SENDER_ID_BITS          3      TV      NO
             In case of GIKE_REKEY the SPI is the IKEv2 Header SPI pair where the
             first 8 octets become the "Initiator's SPI" field in the
             G-IKEv2 rekey message IKEv2 HDR, and the second 8 octets become
-            the "Responder's SPI" in the same HDR. When selecting SPI the GCKS
+            the "Responder's SPI" in the same HDR. <!-- When selecting SPI the GCKS
             <bcp14>MUST</bcp14> make sure that the sole first 8 octets (corresponding to "Initiator's SPI" 
-            field in the IKEv2 header) uniquely identify the Rekey SA.
+            field in the IKEv2 header) uniquely identify the Rekey SA. -->
             </t>
 
             <t>Group Key Bag Attributes (variable) -- Contains Key
