@@ -56,7 +56,7 @@
       </t>
 
       <t> This document obsoletes RFC 6407. This documents also updates RFC 7296 by
-      renaming a transform type 5 from "Extended Sequence Numbers (ESN)" to the "Replay Protection (RP)" 
+      renaming a transform type 5 from "Extended Sequence Numbers (ESN)" to the "Anti-Replay Protection (ARP)" 
       and by renaming IKEv2 authentication method 0 from "Reserved" to "NONE".
       </t>
     </abstract>
@@ -572,7 +572,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           </t>
 
           <t> The GSA_AUTH exchange is similar to the IKE_AUTH exchange with the 
-          difference that its goal is to establish multicast Data-Security SAs
+          difference that its goal is to establish multicast Data-Security SA(s)
           and optionally provide GM with the keys for Rekey SA. The set of payloads 
           in the GSA_AUTH exchange is slightly different, because policy is not
           negotiated between the group member and the GCKS, but instead
@@ -807,6 +807,13 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           and it is ready to send or receive packets matching the TEK
           policy.</t>
 
+          <t> If the group member is not a sender for a received Data-Security SA, 
+          then it <bcp14>MUST</bcp14> install this SA only in the inbound direction.
+          If the group member is a sender for a received Data-Security SA, 
+          and it is not going to receive back the data it sends, 
+          then it <bcp14>MUST</bcp14> install this SA only in the outgoing direction.
+          </t>
+
           <t>The GSA KEK policy <bcp14>MUST</bcp14> include the attribute GSA_INITIAL_MESSAGE_ID with
           a first Message ID the GM should expect to receive if it is non-zero.
           The value of the attribute <bcp14>MUST</bcp14> be checked by a GM against any previously received Message ID for this group.
@@ -817,6 +824,9 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           attacks. The first GSA_REKEY message that the GM receives from the
           GCKS will have a Message ID greater or equal to the Message ID
           received in the GSA_INITIAL_MESSAGE_ID attribute.</t>
+
+          <t>Group members <bcp14>MUST</bcp14> install the GIKE_REKEY SA only in the inbound direction.
+          </t>
 
           <t>Once a GM successfully registers to the group it <bcp14>MUST</bcp14> replace
           any information related to this group (policy, keys) that it might
@@ -987,7 +997,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           <xref target="gsa_payload"></xref>.</t>
 
           <t>The KD payload contains the keys for the policy included in the
-          GSA. If the Data-Security SA is being refreshed in this rekey
+          GSA. If one or more Data-Security SAs are being refreshed in this rekey
           message, the IPsec keys are updated in the KD, and/or if the rekey
           SA is being refreshed in this rekey message, the rekey Key or the
           LKH KEK array (e.g. in case of LKH) is updated in the KD payload.</t>
@@ -1164,11 +1174,11 @@ P = InnerPlds
             decrypts the message and verifies its integrity using the current KEK. If the AUTH payload is present
             in the decrypted message, then the GM validates authenticity of the message using the key retrieved 
             in a previous G-IKEv2 exchange. Then the GM verifies the Message ID, and processes
-            the GSA and KD payloads. The group member then downloads the new Data-Security SA
+            the GSA and KD payloads. The group member then downloads the new Data-Security SA(s)
             and/or new Rekey SA. The parsing of the payloads is identical to
             the parsing done in the registration exchange.</t>
 
-            <t>Replay protection is achieved by a group member rejecting a
+            <t>Anti-replay protection is achieved by a group member rejecting a
             GSA_REKEY message which has a Message ID smaller than the current
             Message ID that the GM is expecting. The GM expects the Message ID
             in the first GSA_REKEY message it receives to be equal or greater
@@ -1193,9 +1203,6 @@ P = InnerPlds
             to the GCKS in order to obtain an Sender-ID value (along with
             the current group policy). 
             </t>
-
-            <t> If the group member is not a sender for the received Data-Security SA, 
-            then it <bcp14>MUST</bcp14> install this SA only in the inbound direction.</t>
 
             <t>Once a new Rekey SA is installed as a result of GSA_REKEY
             message, the current Rekey SA (over which the message was received)
@@ -1403,7 +1410,7 @@ GM (Responder)                GCKS (Initiator)
         </section>
 
         <section anchor="sid-usage" title="GM Usage of Sender-ID">
-          <t>A GM applies the Sender-ID to Data-Security SA as follows.
+          <t>A GM applies the Sender-ID to Data-Security SAs as follows.
           <list style="symbols">
 
           <t>The most significant bits of the IV indicated in the GWP_SENDER_ID_BITS attribute (<xref target="gwp_attr_sid_bits" />) are
@@ -1419,37 +1426,41 @@ GM (Responder)                GCKS (Initiator)
         </section>
       </section>
 
-      <section anchor="seqnum" title="Replay Protection for Multicast Data-Security SAs">
-        <t>IPsec provides replay protection as part of its security services.
-        With multicast extension for IPsec replay protection is not always possible to achieve 
+      <section anchor="seqnum" title="Anti-Replay Protection for Multicast Data-Security SAs">
+        <t>IPsec provides anti-replay protection as part of its security services.
+        With multicast extension for IPsec anti-replay protection is not always possible to achieve 
         (see Section 6.1 of Multicast Group Security Architecture <xref target="RFC3740" />).
         In particular, if there are many group senders for a Data-Security SA, then
         each of them will independently increment the Sequence Number field in the ESP header
         (see Section 2 of ESP <xref target="RFC4303" />) thus making it impossible for the 
         group receivers to filter out replayed packets. However, if there is only one
-        group sender for a Data-Security SA, then it is possible to achieve replay protection
+        group sender for a Data-Security SA, then it is possible to achieve anti-replay protection
         with some restrictions (see <xref target="esn" />). The GCKS may create several Data-Security SAs 
         with the same traffic selectors allowing only a single group sender in each SA 
-        if it is desirable to get replay protection with multiple (but still limited number) of group senders.
+        if it is desirable to get anti-replay protection with multiple (but still limited number) of group senders.
         </t>
 
         <t>IPsec architecture assumes that it is a local matter for an IPsec receiver whether 
-        replay protection is active or not. In other words, an IPsec sender always increments
+        anti-replay protection is active or not. In other words, an IPsec sender always increments
         the Sequence Number field in the ESP header and a receiver decides whether to check
         for replayed packets or not. With multicast extension for IPsec this approach generally 
         isn't applicable, since group members don't know how many group senders exist
-        for a particular Data-Security SA. For this reason the status or replay protection must be 
+        for a particular Data-Security SA. For this reason the status or anti-replay protection must be 
         part of the policy downloaded to GMs by GCKS.
         </t>
 
         <t>For this purpose this specification re-uses the "Extended Sequence Numbers" transform,
         defined in Section 3.3.2 of IKEv2 <xref target="RFC7296" />. This specification renames 
-        this transform to "Replay Protection" and adds a new value for possible Transform IDs:
-        "Not Used" (&lt;TBA by IANA&gt;), which means that replay protection is not used for the SA. 
+        this transform to "Anti-Replay Protection" and adds a new value for possible Transform IDs:
+        "Not Used" (&lt;TBA by IANA&gt;), which means that anti-replay protection is not used for the SA. 
         </t>
 
         <t> The GCKS <bcp14>MUST</bcp14> include this transform in the GSA payload for every Data-Security SA.
         See <xref target="esn" /> for more details.
+        </t>
+
+        <t> When a Data-Security SA has a single sender and anti-replay protection for this SA is enabled, the GCKS <bcp14>MUST</bcp14> estimate the data 
+        rate and rekey the SA frequently enough so that its Sequence Number (SN) does not wrap.
         </t>
       </section>
 
@@ -1457,8 +1468,8 @@ GM (Responder)                GCKS (Initiator)
         <t>IKEv2 IANA registry for Encryption Algorithm Transform IDs <xref target="IKEV2-IANA" /> defines several transforms
         with implicit IV. These transforms rely on ESP Sequence Number for constructing IV 
         (see Implicit IV for Counter-Based Ciphers in ESP <xref target="RFC8750" /> for details).
-        It requires replay protection to be enabled for an ESP SA using these encryption transforms.
-        Unless replay protection is active for a multicast ESP SA (see <xref target="seqnum" />, encryption
+        It requires anti-replay protection to be enabled for an ESP SA using these encryption transforms.
+        Unless anti-replay protection is active for a multicast ESP SA (see <xref target="seqnum" />, encryption
         transforms that rely on Sequence Number for IV construction <bcp14>MUST NOT</bcp14> be used.
         In any case, such transforms <bcp14>MUST NOT</bcp14> be used for any G-IKEv2 SA (both unicast and multicast).
         </t>
@@ -2058,9 +2069,9 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                   
             </section>
 XXXX -->
 
-            <section anchor="esn" title="Replay Protection Transform">
+            <section anchor="esn" title="Anti-Replay Protection Transform">
               <t>The "Extended Sequence Number (ESN)" Transform is defined in <xref target="RFC7296" />.
-              This specification renames this transform to "Replay Protection (RP)".
+              This specification renames this transform to "Anti-Replay Protection (ARP)".
               This transform allows to specify whether the 64-bit Extended Sequence Numbers (ESN) are to be used in ESP and AH. 
               </t>
 
@@ -2070,12 +2081,8 @@ XXXX -->
               of ESN for each sender in the group. The algorithm for doing this described in AH <xref target="RFC4302" />
               and ESP <xref target="RFC4303" /> is resource-consuming and is only suitable when a receiver is able to guess
               the high-order 32 bits close enough to its real value, which is not the case for multicast SAs. 
-              For this reason the value "Extended Sequence Numbers" (1) for the Replay Protection transform type 
+              For this reason the value "Extended Sequence Numbers" (1) for the Anti-Replay Protection transform type 
               <bcp14>MUST NOT</bcp14> be used in the GSA Payload.
-              </t>
-
-              <t>The GCKS <bcp14>MUST</bcp14> estimate the data rate and rekey 
-              Data-Security SAs frequently enough so that Sequence Numbers (SN) don't wrap.
               </t>
             </section>
           </section>
@@ -2947,7 +2954,7 @@ ARX_KW                          2
       </section> 
     </section>
 
-    <section anchor="restrictions" title="Usigng G-IKEv2 Attributes">
+    <section anchor="restrictions" title="Using G-IKEv2 Attributes">
       <t>G-IKEv2 defines a number of attributes, that are used to convey information
       from GCKS to GMs. There are some restrictions on where and when these attributes
       can appear in G-IKEv2 messages, which are defined when the attributes are introduced.
@@ -3450,7 +3457,7 @@ Value       Next Payload Type               Notation
         <t>This document makes the following changes to the "Transform Type Values" registry:
         <list style="symbols" >
           <t>Defines two new transform types -- "Authentication Method (AUTHMETH)" and "Group Key Management Method (GKM)";</t>
-          <t>Renames existing transform type "Extended Sequence Numbers (ESN)" to "Replay Protection (RP)";</t>
+          <t>Renames existing transform type "Extended Sequence Numbers (ESN)" to "Anti-Replay Protection (ARP)";</t>
           <t>Changes the "Used In" column for the existing allocations as follows;</t>
         </list>
         <figure align="center">
@@ -3462,7 +3469,7 @@ Type  Description                          Used In
 3     Integrity Algorithm (INTEG)          IKE, GIKE_REKEY, AH, 
                                            optional in ESP
 4     Key Exchange Method (KE)             IKE, optional in AH, ESP
-5     Replay Protection (RP)               AH and ESP
+5     Anti-Replay Protection (ARP)         AH and ESP
 <TBA> Authentication Method (AUTHMETH)     GIKE_REKEY
 <TBA> Group Key Management Method (GKM)    GIKE_REKEY
 ]]><!-- XXXX <![CDATA[<TBA> Encapsulation Mode (MODE)             (AH and ESP)
@@ -3482,7 +3489,7 @@ Value       Attribute Type                      Format
         </t>
 
         <t>This document renames the "Transform Type 5 - Extended Sequence Numbers Transform IDs" registry 
-        to "Transform Type 5 - Replay Protection Transform IDs"
+        to "Transform Type 5 - Anti-Replay Protection Transform IDs"
         and also adds a new value into this registry:
         <figure align="center">
           <artwork align="left"><![CDATA[
@@ -3713,7 +3720,6 @@ Protocol ID       Protocol
         to encrypt key Y, and the notation X{K_sa} means key X is used 
         to encrypt the SA key K_sa (wich always has zero Key ID). Note, that GSK_w{K_sa} means that
         the SA key is encrypted with the default wrap key, in which case both KWK ID and Key ID are zero.
-        For simplicity we will assume that 
         </t>
 
         <t>The content of the KD payload will be shown as a sequence
