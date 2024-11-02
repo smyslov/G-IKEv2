@@ -1432,35 +1432,37 @@ GM (Responder)                GCKS (Initiator)
         (see Section 6.1 of Multicast Group Security Architecture <xref target="RFC3740" />).
         In particular, if there are many group senders for a Data-Security SA, then
         each of them will independently increment the Sequence Number field in the ESP header
-        (see Section 2 of ESP <xref target="RFC4303" />) thus making it impossible for the 
+        (see Section 2.2 of ESP <xref target="RFC4303" /> and Section 2.5 of AH <xref target="RFC4302" />) thus making it impossible for the 
         group receivers to filter out replayed packets. However, if there is only one
         group sender for a Data-Security SA, then it is possible to achieve anti-replay protection
-        with some restrictions (see <xref target="esn" />). The GCKS may create several Data-Security SAs 
+        with some restrictions (see <xref target="esn" />). The GCKS <bcp14>MAY</bcp14> create several Data-Security SAs 
         with the same traffic selectors allowing only a single group sender in each SA 
         if it is desirable to get anti-replay protection with multiple (but still limited number) of group senders.
         </t>
 
         <t>IPsec architecture assumes that it is a local matter for an IPsec receiver whether 
         anti-replay protection is active or not. In other words, an IPsec sender always increments
-        the Sequence Number field in the ESP header and a receiver decides whether to check
-        for replayed packets or not. With multicast extension for IPsec this approach generally 
-        isn't applicable, since group members don't know how many group senders exist
-        for a particular Data-Security SA. For this reason the status or anti-replay protection must be 
-        part of the policy downloaded to GMs by GCKS.
+        the Sequence Number field in the ESP/AH header and a receiver decides whether to check
+        for replayed packets or not. With multicast extension for IPsec this approach 
+        doesn't work in case when multiple group senders exist for a Data-Security SA. 
+        For this reason it is desirable that the GCKS informs the GMs whether there are multiple group senders in the group or not.
         </t>
 
         <t>For this purpose this specification re-uses the "Extended Sequence Numbers" transform,
         defined in Section 3.3.2 of IKEv2 <xref target="RFC7296" />. This specification renames 
         this transform to "Anti-Replay Protection" and adds a new value for possible Transform IDs:
-        "Not Used" (&lt;TBA by IANA&gt;), which means that anti-replay protection is not used for the SA. 
+        "Not Used" (&lt;TBA by IANA&gt;), which means that anti-replay protection is not applicable for the SA. 
+        The decision whether to enable anti-replay protection is still a local matter of a GM (in accordance with 
+        IPsec architecture), but the GCKS should inform the GMs when this protection is not feasable (e.g. for a multi-sender SA).
         </t>
 
-        <t> The GCKS <bcp14>MUST</bcp14> include this transform in the GSA payload for every Data-Security SA.
+        <t> The GCKS <bcp14>SHOULD</bcp14> include this transform in the GSA payload for every Data-Security SA.
+        For a single-sender Data-Security SA the GCKS <bcp14>MAY</bcp14> omit this transform. 
         See <xref target="esn" /> for more details.
         </t>
 
-        <t> When a Data-Security SA has a single sender and anti-replay protection for this SA is enabled, the GCKS <bcp14>MUST</bcp14> 
-        be configured to rekey the SA frequently enough so that its Sequence Number (SN) does not wrap.
+        <t> When a Data-Security SA has a single sender, the GCKS <bcp14>MUST</bcp14> 
+        be configured to rekey the SA frequently enough so that the Sequence Number (SN) does not wrap.
         </t>
       </section>
 
@@ -1968,8 +1970,8 @@ GSK_e | GSK_a | GSK_w = KEYMAT
 Protocol    Mandatory Types                       Optional Types
 ----------------------------------------------------------------
 GIKE_REKEY  ENCR, INTEG*, PRF, AUTHMETH**, GKM**
-ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 INTEG, RP
-AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 RP
+ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 INTEG, ARP
+AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 ARP
               ]]></artwork>
             </figure>
 
@@ -2082,7 +2084,7 @@ XXXX -->
               and ESP <xref target="RFC4303" /> is resource-consuming and is only suitable when a receiver is able to guess
               the high-order 32 bits close enough to its real value, which is not the case for multicast SAs. 
               For this reason the value "Extended Sequence Numbers" (1) for the Anti-Replay Protection transform type 
-              <bcp14>MUST NOT</bcp14> be used in the GSA Payload.
+              <bcp14>MUST NOT</bcp14> be used in the GSA Payload for Data-Security SAs utilizing protocols ESP or AH. 
               </t>
             </section>
           </section>
