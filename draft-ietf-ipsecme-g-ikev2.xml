@@ -292,8 +292,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           <dd>The symmetric cipher key used to protect another key.
           </dd>
 
-          <dt>Group-Wise (GW) policy</dt>
-          <dd>Group-wide policy not related to a particular SA.
+          <dt>Group-wide (GW) policy</dt>
+          <dd>Group policy not related to a particular SA.
           </dd>
 
           <dt>Activation Time Delay (ATD)</dt>
@@ -792,7 +792,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
 
           <t>The GSA payload contains the security policy and cryptographic
           protocols used by the group. This policy describes the optional Rekey SA
-          (KEK), Data-Security SAs (TEK), and optional Group-Wise (GW) policy. 
+          (KEK), Data-Security SAs (TEK), and optional Group-wide (GW) policy. 
           If the policy in the GSA payload is not acceptable to the GM,
           it <bcp14>SHOULD</bcp14> notify the GCKS by initiating a GSA_REGISTRATION exchange 
           with a NO_PROPOSAL_CHOSEN Notify payload (see <xref target="gsa_registration"></xref>). 
@@ -1519,7 +1519,7 @@ GM (Responder)                GCKS (Initiator)
         </t>
 
         <t>Each KWK is associated with a key wrap algorithm, specified in the Key Wrap Algorithm attribute in the Encryption Algorithm transform
-        used for the SA the KWK is sent over. The size of these KWKs is determined by the used key wrap algorithm requirements,
+        used for the SA the KWK is sent over. The size of these KWKs is determined by the used key wrap algorithm,
         but it <bcp14>SHOULD NOT</bcp14> be less than the size of the key for the Encryption Algorithm transform
         for the Rekey SA and for all Data-Security SAs in the group (taking into consideration the Key Length attribute if present).
         </t>
@@ -1787,7 +1787,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
     
         <section anchor="group_policy" title="Group Policies">
           <t>Group policies are comprised of two types of policy -- Group SA (GSA) policy
-          and Group-Wise (GW) policy. GSA policy defines parameters 
+          and Group-wide (GW) policy. GSA policy defines parameters 
           for the Security Association for the group. Depending on the 
           employed security protocol GSA policies may further be classified as
           Rekey SA policy (GSA KEK) and Data-Security SA policy (GSA TEK).
@@ -1807,7 +1807,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
           (e.g., video, audio, and text) to be associated with a session, but
           each protected with an individual security association policy.</t>
 
-          <t>A GW policy allows for the distribution of group-wise policy,
+          <t>A GW policy allows for the distribution of group-wide policy,
           such as instructions for when to activate and de-activate SAs.</t>
 
           <t>Policies are distributed in substructures to the GSA payload.
@@ -2176,9 +2176,9 @@ GSA_NEXT_SPI            3    TLV     YES          GIKE_REKEY, AH, ESP
           </section>
         </section>
 
-        <section title="Group-Wise Policy Substructure"  anchor="gw_policy">
+        <section title="Group-wide Policy Substructure"  anchor="gw_policy">
           <t>Group specific policy that does not belong to any SA policy can be distributed to
-          all group member using Group-Wise (GW) policy substructure.</t>
+          all group member using Group-wide (GW) policy substructure.</t>
 
           <t>The GW policy substructure is defined as follows:</t>
 
@@ -2220,7 +2220,7 @@ GSA_NEXT_SPI            3    TLV     YES          GIKE_REKEY, AH, ESP
 
           <section anchor="gwp_attr" title="GW Policy Attributes">
               <t>This document creates a new IKEv2 IANA registry for the types
-              of the Group-Wise Policy attributes which is initially filled as described in <xref target="IANA" />.
+              of the group-wide policy attributes which is initially filled as described in <xref target="IANA" />.
               In particular, the following attributes are initially added.
 
           <figure>
@@ -2513,10 +2513,9 @@ GM_SENDER_ID            3      TLV      YES
 
             <t>The content of the attribute has a format defined in <xref target="wrapped_key" />
             with a precondition that the Key ID field <bcp14>MUST NOT</bcp14> be zero. 
-            The algorithm associated with the key
-            is from the Encryption Transform for the SA the WRAP_KEY
-            attributes was sent in. The size of the key <bcp14>MUST</bcp14> be equal to the 
-            key size for this algorithm.
+            The algorithm associated with the key is defined by the Key Wrap Algorithm attribute
+            in the Encryption Algorithm transform for the SA the WRAP_KEY attributes was sent in. 
+            The size of the attribute data <bcp14>MUST</bcp14> be equal to the key size for this key wrap algorithm.
             </t>
 
             <t>Multiple instances of the WRAP_KEY attributes <bcp14>MAY</bcp14> be present in the key bag.
@@ -2586,10 +2585,9 @@ GM_SENDER_ID            3      TLV      YES
 
           <t> In G-IKEv2 the key wrap algorithm <bcp14>MUST</bcp14> be negotiated in the IKE_SA_INIT
           exchange, so that the GCKS be able to send encrypted keys to the GM in the GSA_AUTH exchange.
-          In addition, if the GCKS the multicast Rekey SA for group rekey, then it <bcp14>MUST</bcp14>
-          specify the key wrap algorithm in the GSA payload. If SAg payload is included in the
-          GSA_AUTH request, then it <bcp14>MUST</bcp14> also indicate which key wrap algorithms
-          are supported by the GM.
+          In addition, if the GCKS plans to use the multicast Rekey SA for group rekey, then it <bcp14>MUST</bcp14>
+          specify the key wrap algorithm in the GSA payload. If SAg payload is included in the GSA_AUTH request, 
+          then it <bcp14>MUST</bcp14> indicate which key wrap algorithms are supported by the GM.
           </t>
 
           <t> The key wrap algorithm is specified by augmenting the Encryption Algorithm transform with a 
@@ -2608,16 +2606,18 @@ GM_SENDER_ID            3      TLV      YES
 Key Wrap Algorithm              Value
 -------------------------------------
 Reserved                        0
-KW_5649                         1
-ARX_KW                          2
+KW_5649_128                     1
+KW_5649_192                     2
+KW_5649_256                     3
+KW_ARX                          4
           ]]></artwork>
           </figure>
 
           <t>These algorithms are defined as follows.
           <list style="symbols">
-            <t> KW_5649 -- Key wrap algorithm defined in <xref target="RFC5649" />. This algorithm is designed for use with AES block cipher, 
-            but can also be used with other block ciphers.</t>
-            <t> ARX_KW -- The ARX-KW-8-2-4-GX key wrap algorithm defined in <xref target="ARX-KW" />. This algorithm is designed for use 
+            <t> KW_5649_128, KW_5649_192, KW_5649_256 -- Key wrap algorithm defined in <xref target="RFC5649" /> with 128-bit, 192-bit and 256-bit key respectively. 
+            This key wrap algorithm is designed for use with AES block cipher.</t>
+            <t> KW_ARX -- The ARX-KW-8-2-4-GX key wrap algorithm defined in <xref target="ARX-KW" />. This key wrap algorithm is designed for use 
             with Chacha20 stream cipher.</t>
           </list>
 
@@ -3361,7 +3361,7 @@ Private Use        16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "Group-Wise Policy Attributes". The initial values of the new registry are:
+        <t>This document creates a new IANA registry "Group-wide Policy Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
@@ -3420,9 +3420,11 @@ Private Use        16384-32767
 Key Wrap Algorithm      Value
 -----------------------------
 Reserved                0
-KW_5649                 1
-ARX_KW                  2
-Unassigned             3-1023
+KW_5649_128             1
+KW_5649_192             2
+KW_5649_256             3
+KW_ARX                  4
+Unassigned             5-1023
 Private Use         1024-65535
           ]]></artwork>
           </figure>
