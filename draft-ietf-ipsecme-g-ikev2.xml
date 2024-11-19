@@ -548,9 +548,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         exchange negotiates cryptographic algorithms, exchanges nonces and
         computes a shared key between the GM and the GCKS.
         In addition to the cryptographic algorithms negotiated for use in IKEv2 SA,
-        a key wrap algorithm is also negotiated in this exchange.
-        This is achieved by augmenting each proposed Encryption Algorithm transform with a new 
-        "Key Wrap Algorithm" attribute. See <xref target="wrapped_key" /> for details.
+        a key wrap algorithm is also negotiated in this exchange by means of a new "Key Wrap Algorithm" transform. 
+        See <xref target="wrapped_key" /> for details.
         </t>
 
         <t>The second exchange GSA_AUTH is similar to the IKEv2 IKE_AUTH exchange <xref target="RFC7296"></xref>.
@@ -1499,13 +1498,20 @@ GM (Responder)                GCKS (Initiator)
       used with G-IKEv2, but are not specified as a part of this
       document.</t>
 
-      <t>The Group Key Management Method transform from the GSA 
+      <t>This specification assumes that all group keys, that are 
+      sent to the GMs by the GCKS, are encrypted with some other keys,
+      called Key Wrap Keys (KWK). The Key Wrap Algorithm transform
+      defines the algorithm used for key wrapping in the context of an SA.
+      </t>
+
+<!--      <t>The Group Key Management Method transform from the GSA 
       policy specifies how members of the group obtain group keys. 
-      This document specifies a single method for the group key management -- 
+      This document specifies a single method for the group key management -
       Wrapped Key Download. This method assumes that all group keys are
       sent to the GMs by the GCKS encrypted with some other keys,
       called Key Wrap Keys (KWK).
       </t>
+-->
 
       <section anchor="kwk" title="Key Wrap Keys">
         <t>Every GM always knows at least one KWK -- the KWK that is associated with the IKE SA
@@ -1518,8 +1524,8 @@ GM (Responder)                GCKS (Initiator)
         hierarchy and are shared among several GMs may be provided by the GCKS.
         </t>
 
-        <t>Each KWK is associated with a key wrap algorithm, specified in the Key Wrap Algorithm attribute in the Encryption Algorithm transform
-        used for the SA the KWK is sent over. The size of these KWKs is determined by the used key wrap algorithm,
+        <t>Each KWK is associated with a key wrap algorithm, specified in the Key Wrap Algorithm transform.
+        The size of these KWKs is determined by the used key wrap algorithm,
         but it <bcp14>SHOULD NOT</bcp14> be less than the size of the key for the Encryption Algorithm transform
         for the Rekey SA and for all Data-Security SAs in the group (taking into consideration the Key Length attribute if present).
         </t>
@@ -1705,7 +1711,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
 
         where GSK_e and GSK_a are the keys used for the Encryption Algorithm and the Integrity Algorithm transforms
         for the corresponding SA and GSK_w is a default KWK for this SA. Note, that GSK_w is used with 
-        the key wrap algorithm specified in the Key Wrap Algorithm attribute in the Encryption Algorithm transform. If an AEAD algorithm is used for encryption, 
+        the key wrap algorithm specified in the Key Wrap Algorithm transform. If an AEAD algorithm is used for encryption, 
         then GSK_a key will not be used (GM can use the formula above assuming the length of GSK_a is zero).
         </t>
       </section>
@@ -1960,7 +1966,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
             For this purpose the transforms defined in <xref target="RFC7296" />
             are used. In addition, new transform types are defined for using in G-IKEv2:
             Authentication Method (AUTHMETH) <!-- XXXX , Encapsulation Mode (MODE) --> 
-            and Group Key Management Method (GKM), see <xref target="IANA" />.
+            and Key Wrap Algorithm (KWA)<!-- Group Key Management Method (GKM) -->, see <xref target="IANA" />.
             </t>
 
             <t> Valid Transform Types depend on the SA protocol and are summarized in the table below.
@@ -1969,7 +1975,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
               <artwork align="left"><![CDATA[
 Protocol    Mandatory Types                       Optional Types
 ----------------------------------------------------------------
-GIKE_REKEY  ENCR, INTEG*, PRF, AUTHMETH**, GKM**
+GIKE_REKEY  ENCR, INTEG*, PRF, AUTHMETH**, KWA
 ESP         ENCR]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 INTEG, ARP
 AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                                 ARP
               ]]></artwork>
@@ -2029,15 +2035,16 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                   
               </t>
             </section>
 
-            <section anchor="gkm_alg" title="Group Key Management Method Transform">
-              <t>The Group Key Management Method (GKM) transform is used in the GIKE_REKEY
+<!--            <section anchor="gkm_alg" title="Group Key Management Method Transform"> -->
+            <section anchor="wrapping_alg" title="Key Wrap Algorithm Transform">
+<!--              <t>The Group Key Management Method (GKM) transform is used in the GIKE_REKEY
               policy to convey information of how GCKS will manage the group keys to provide 
               forward and backward access control (i.e., used to exclude group members). 
               Possible key management methods are defined in a new IKEv2 registry 
-              "Transform Type &lt;TBA&gt; -- Group Key Management Methods"
+              "Transform Type &lt;TBA&gt; - Group Key Management Methods"
               (see <xref target="IANA" />). This document defines one values for this registry:
               <list style="hanging" hangIndent="6" >
-                <t hangText="Wrapped Key Download (&lt;TBA by IANA&gt;)" > -- Keys are downloaded by GCKS to the GMs
+                <t hangText="Wrapped Key Download (&lt;TBA by IANA&gt;)" > - Keys are downloaded by GCKS to the GMs
                 in encrypted form. This algorithm may provide forward and backward access control
                 if some form of key hierarchy is used and each GM is provided with a personal 
                 key at the time of registration. Otherwise no access control is provided.
@@ -2046,9 +2053,43 @@ AH          INTEG]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                   
               The group key management method <bcp14>MUST NOT</bcp14> change as a result of rekey operations.
               This means that the Group Key Management Method transform may not appear in the rekey
               messages, it may only appear in the registration exchange (either GSA_AUTH or GSA_REGISTRATION).
+              </t> -->
+
+              <t>The Key Wrap Algorithm (KWA) transform is used to convey information about an algorithm,
+              that is used for key wrapping in G-IKEv2. See <xref target="wrapped_key" /> for details.
               </t>
 
-              <t>The type of the Group Key Management Method transform is &lt;TBA by IANA&gt;.
+              <t> This document creates a new IKEv2 IANA registry for the key wrap algorithms 
+              which is initially filled as described in <xref target="IANA" />.
+              In particular, the following entries are initially added.
+              </t>
+
+              <figure>
+              <preamble></preamble>
+              <artwork align="center"><![CDATA[
+Key Wrap Algorithm              Value
+-------------------------------------
+Reserved                        0
+KW_5649_128                     1
+KW_5649_192                     2
+KW_5649_256                     3
+KW_ARX                          4
+              ]]></artwork>
+              </figure>
+
+              <t>These algorithms are defined as follows.
+              <list style="symbols">
+                <t> KW_5649_128, KW_5649_192, KW_5649_256 -- Key wrap algorithm defined in <xref target="RFC5649" /> with 128-bit, 192-bit and 256-bit key respectively. 
+                This key wrap algorithm is designed for use with AES block cipher.</t>
+                <t> KW_ARX -- The ARX-KW-8-2-4-GX key wrap algorithm defined in <xref target="ARX-KW" />. This key wrap algorithm is designed for use 
+                with Chacha20 stream cipher.</t>
+              </list>
+
+              More key wrap algorithms may be defined in future. The requirement is that these algorithms <bcp14>MUST</bcp14> be able 
+              to wrap key material of size up to 256 bytes.
+              </t>
+
+              <t>The type of the Key Wrap Algorithm transform is &lt;TBA by IANA&gt;.
               </t>
 
             </section>
@@ -2406,7 +2447,7 @@ SA_KEY              1      TLV      NO/YES*         GIKE_REKEY,
           </figure>
 
           (*) Multiple SA_KEY attributes may only appear for the GIKE_REKEY protocol
-          in the GSA_REKEY exchange if the GCKS uses the Group Key Management
+          in the GSA_REKEY exchange if the GCKS uses the group key management
           method that allows excluding GMs from the group (like LKH).
           </t>
 
@@ -2513,8 +2554,8 @@ GM_SENDER_ID            3      TLV      YES
 
             <t>The content of the attribute has a format defined in <xref target="wrapped_key" />
             with a precondition that the Key ID field <bcp14>MUST NOT</bcp14> be zero. 
-            The algorithm associated with the key is defined by the Key Wrap Algorithm attribute
-            in the Encryption Algorithm transform for the SA the WRAP_KEY attributes was sent in. 
+            The algorithm associated with the key is defined by the Key Wrap Algorithm transform
+            for the SA the WRAP_KEY attributes was sent in. 
             The size of the attribute data <bcp14>MUST</bcp14> be equal to the key size for this key wrap algorithm.
             </t>
 
@@ -2579,53 +2620,22 @@ GM_SENDER_ID            3      TLV      YES
           Algorithms used for key wrapping are usually based on generic encryption algorithms,
           but their mode of operation is optimized for protecting short high-entropy data with minimal additional overhead.
           While in general key wrap algorithms can be generic, in practice they are often tied to the underlying
-          encryption algorithms. For example, AES Key Wrap with Padding Algorithm <xref target="RFC5649" /> defines key wrapping using AES and
-          Key Wrapping Constructions using SipHash and ChaCha <xref target="ARX-KW" /> defines key wrapping using Chacha20.
+          encryption algorithms. For example, AES Key Wrap with Padding Algorithm <xref target="RFC5649" /> defines key wrapping using AES,
+          and Key Wrapping Constructions using SipHash and ChaCha <xref target="ARX-KW" /> defines key wrapping using Chacha20.
           </t>
 
           <t> In G-IKEv2 the key wrap algorithm <bcp14>MUST</bcp14> be negotiated in the IKE_SA_INIT
           exchange, so that the GCKS be able to send encrypted keys to the GM in the GSA_AUTH exchange.
           In addition, if the GCKS plans to use the multicast Rekey SA for group rekey, then it <bcp14>MUST</bcp14>
-          specify the key wrap algorithm in the GSA payload. If SAg payload is included in the GSA_AUTH request, 
-          then it <bcp14>MUST</bcp14> indicate which key wrap algorithms are supported by the GM.
+          specify the key wrap algorithm in the GSA payload. Note that key wrap algorithms 
+          for these cases <bcp14>MAY</bcp14> be different - for the unicast SA the key wrap algorithms is negotiated
+          between the GM and the GCKS, while for the multicast Rekey SA the key wrap algorithm
+          is provided by the GCKS to the group members as part of the group policy.
+          If SAg payload is included in the GSA_AUTH request, then it <bcp14>MUST</bcp14> indicate which key wrap algorithms are supported by the GM.
+          In all these cases the key wrap algorithm is specified in a Key Wrap Algorithm transform <xref target="wrapping_alg"/>.
           </t>
 
-          <t> The key wrap algorithm is specified by augmenting the Encryption Algorithm transform with a 
-          new "Key Wrap Algorithm" attribute (&lt;TBA by IANA&gt;). This way the key wrap
-          algorithm is tied to the encryption algorithm.
-          </t>
-
-          <t> This document creates a new IKEv2 IANA registry for the key wrap algorithms 
-          which is initially filled as described in <xref target="IANA" />.
-          In particular, the following entries are initially added.
-          </t>
-
-          <figure>
-          <preamble></preamble>
-          <artwork align="center"><![CDATA[
-Key Wrap Algorithm              Value
--------------------------------------
-Reserved                        0
-KW_5649_128                     1
-KW_5649_192                     2
-KW_5649_256                     3
-KW_ARX                          4
-          ]]></artwork>
-          </figure>
-
-          <t>These algorithms are defined as follows.
-          <list style="symbols">
-            <t> KW_5649_128, KW_5649_192, KW_5649_256 -- Key wrap algorithm defined in <xref target="RFC5649" /> with 128-bit, 192-bit and 256-bit key respectively. 
-            This key wrap algorithm is designed for use with AES block cipher.</t>
-            <t> KW_ARX -- The ARX-KW-8-2-4-GX key wrap algorithm defined in <xref target="ARX-KW" />. This key wrap algorithm is designed for use 
-            with Chacha20 stream cipher.</t>
-          </list>
-
-          More key wrap algorithms may be defined in future. The requirement is that these algorithms <bcp14>MUST</bcp14> be able 
-          to wrap key material of size up to 256 bytes.
-          </t>
-
-          <t>The key wrap algorithm is used with the encryption algorithm that protects 
+<!--          <t>The key wrap algorithm is used with the encryption algorithm that protects 
           the message the wrapped keys are sent in: in case of unicast
           IKE SA (used for GMs registration and rekeying with GSA_INBAND_REKEY)
           the encryption algorithm will be the one negotiated during the 
@@ -2636,6 +2646,7 @@ KW_ARX                          4
           between the GM and the GCKS, while for the multicast Rekey SA the key wrap algorithm
           is provided by the GCKS to the group members as part of the group policy.
           </t>
+-->
 
           <t> The format of the wrapped key is shown in <xref target="key_format" />.
           </t>
@@ -3311,18 +3322,38 @@ KW_ARX                          4
         Reserved, Expert Review and Private Use are to be applied as defined
         in <xref target="RFC8126"></xref>.</t>
 
-        <t>This document creates a new IANA registry "Transform Type &lt;TBA&gt; - Group Key Management Methods". 
+<!--        <t>This document creates a new IANA registry "Transform Type &lt;TBA&gt; - Group Key Management Methods". 
         The initial values of the new registry are:
         <figure align="center">
           <artwork align="left"><![CDATA[
 Value                       Group Key Management Method
--------------------------------------------------------
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 Reserved                    0
 Wrapped Key Download        1
 Unassigned                 2-1023
 Private Use             1024-65535
           ]]></artwork>
         </figure>
+        Changes and additions to the unassigned range of this registry are by 
+        the Expert Review Policy <xref target="RFC8126" />.</t>
+-->
+
+        <t>This document creates a new IANA registry "Transform Type &lt;TBA&gt; -- Key Wrap Algorithm IDs". 
+        The initial values of the new registry are:
+          <figure>
+          <preamble></preamble>
+          <artwork align="left"><![CDATA[
+Key Wrap Algorithm      Value
+-----------------------------
+Reserved                0
+KW_5649_128             1
+KW_5649_192             2
+KW_5649_256             3
+KW_ARX                  4
+Unassigned             5-1023
+Private Use         1024-65535
+          ]]></artwork>
+          </figure>
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
@@ -3413,23 +3444,6 @@ Private Use        16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
-        <t>This document creates a new IANA registry "Key Wrap Algorithms". The initial values of the new registry are:
-          <figure>
-          <preamble></preamble>
-          <artwork align="left"><![CDATA[
-Key Wrap Algorithm      Value
------------------------------
-Reserved                0
-KW_5649_128             1
-KW_5649_192             2
-KW_5649_256             3
-KW_ARX                  4
-Unassigned             5-1023
-Private Use         1024-65535
-          ]]></artwork>
-          </figure>
-        Changes and additions to the unassigned range of this registry are by 
-        the Expert Review Policy <xref target="RFC8126" />.</t>
       </section>
 
       <section title="Changes in the Existing IKEv2 Registries">
@@ -3460,7 +3474,7 @@ Value       Next Payload Type               Notation
 
         <t>This document makes the following changes to the "Transform Type Values" registry:
         <list style="symbols" >
-          <t>Defines two new transform types -- "Authentication Method (AUTHMETH)" and "Group Key Management Method (GKM)";</t>
+          <t>Defines two new transform types -- "Key Wrap Algorithm (KWA)" and "Authentication Method (AUTHMETH)";</t>
           <t>Renames existing transform type "Extended Sequence Numbers (ESN)" to "Anti-Replay Protection (ARP)";</t>
           <t>Changes the "Used In" column for the existing allocations as follows;</t>
         </list>
@@ -3474,20 +3488,20 @@ Type  Description                          Used In
                                            optional in ESP
 4     Key Exchange Method (KE)             IKE, optional in AH, ESP
 5     Anti-Replay Protection (ARP)         AH and ESP
+<TBA> Key Wrap Algorithm (KWA)             IKE, GIKE_REKEY
 <TBA> Authentication Method (AUTHMETH)     GIKE_REKEY
-<TBA> Group Key Management Method (GKM)    GIKE_REKEY
-]]><!-- XXXX <![CDATA[<TBA> Encapsulation Mode (MODE)             (AH and ESP)
+]]><!-- XXXX <![CDATA[<TBA> Group Key Management Method (GKM)    GIKE_REKEY
+                      <TBA> Encapsulation Mode (MODE)             (AH and ESP)
           ]]> --></artwork>
         </figure>
         </t>
 
-        <t>This document defines two new Attribute Types in the "IKEv2 Transform Attribute Types" registry:
+        <t>This document defines a new Attribute Type in the "IKEv2 Transform Attribute Types" registry:
         <figure align="center">
           <artwork align="left"><![CDATA[
 Value       Attribute Type                      Format
 ------------------------------------------------------
 <TBA>       Signature Algorithm Identifier      TLV
-<TBA>       Key Wrap Algorithm                  TV
           ]]></artwork>
         </figure>
         </t>
@@ -3680,7 +3694,7 @@ Protocol ID       Protocol
                     value="Springer-Verlag LNCS 2139, 2001, pp. 41-62" />
       </reference>
       <reference anchor="IKEV2-IANA"
-                 target="http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7">
+                 target="http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml">
         <front>
           <title>Internet Key Exchange Version 2 (IKEv2) Parameters</title>
           <author>
