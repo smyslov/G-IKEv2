@@ -6,7 +6,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-16" ipr="trust200902" updates="7296" obsoletes="6407">
+<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-17" ipr="trust200902" updates="7296" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -15,13 +15,13 @@
 
       <address>
         <postal>
-          <street>PO Box 81</street>
-          <city>Moscow (Zelenograd)</city>
-          <code>124460</code>
+          <street></street>
+          <city></city>
+          <code></code>
           <region></region>
           <country>Russian Federation</country>
         </postal>
-        <phone>+7 495 276 0211</phone>
+        <phone></phone>
         <email>svan@elvis.ru</email>
       </address>
     </author>
@@ -1823,7 +1823,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
           <t>The GSA policy substructure contains parameters for the SA
           used with this group. Depending on the security protocol 
           the SA is either a Rekey SA or a Data-Security SA (ESP and AH).
-          It is <bcp14>NOT RECOMMENDED</bcp14> that the GCKS distribute both ESP and AH
+          The GCKS <bcp14>MUST NOT</bcp14> distribute both ESP and AH
           policies for the same set of Traffic Selectors.
           </t>
 
@@ -3564,23 +3564,12 @@ Protocol ID       Protocol
           <artwork><![CDATA[
    Sheela Rowles
    Cisco Systems
-   170 W. Tasman Drive
-   San Jose, California  95134-1706
-   USA
-
-   Phone: +1-408-527-7677
-   Email: sheela@cisco.com
 ]]></artwork>
         </figure>
         <figure>
           <artwork><![CDATA[
    Aldous Yeung
    Cisco Systems
-   170 W. Tasman Drive
-   San Jose, California  95134-1706
-   USA
-
-   Phone: +1-408-853-2032
    Email: cyyeung@cisco.com
 ]]></artwork>
         </figure>
@@ -3588,22 +3577,12 @@ Protocol ID       Protocol
           <artwork><![CDATA[
    Paulina Tran
    Cisco Systems
-   170 W. Tasman Drive
-   San Jose, California  95134-1706
-   USA
-
-   Phone: +1-408-526-8902
-   Email: ptran@cisco.com
 ]]></artwork>
         </figure>
         <figure>
           <artwork><![CDATA[
    Yoav Nir
    Dell EMC
-   9 Andrei Sakharov St
-   Haifa  3190500
-   Israel
-
    Email: ynir.ietf@gmail.com
 ]]></artwork>
         </figure></t>
