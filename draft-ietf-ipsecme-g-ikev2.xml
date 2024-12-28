@@ -6,7 +6,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-18" ipr="trust200902" obsoletes="6407">
+<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-19" ipr="trust200902" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -1179,7 +1179,7 @@ P = InnerPlds
             and/or new Rekey SA. The parsing of the payloads is identical to
             the parsing done in the registration exchange.</t>
 
-            <t>Anti-replay protection is achieved by a group member rejecting a
+            <t>Replay protection is achieved by a group member rejecting a
             GSA_REKEY message which has a Message ID smaller than the current
             Message ID that the GM is expecting. The GM expects the Message ID
             in the first GSA_REKEY message it receives to be equal or greater
@@ -1427,28 +1427,28 @@ GM (Responder)                GCKS (Initiator)
         </section>
       </section>
 
-      <section anchor="seqnum" title="Anti-Replay Protection for Multicast Data-Security SAs">
-        <t>IPsec provides anti-replay protection as part of its security services.
-        With multicast extension for IPsec anti-replay protection is not always possible to achieve 
+      <section anchor="seqnum" title="Replay Protection for Multicast Data-Security SAs">
+        <t>IPsec provides anti-replay service as part of its security services.
+        With multicast extension for IPsec replay protection is not always possible to achieve 
         (see Section 6.1 of Multicast Group Security Architecture <xref target="RFC3740" />).
         In particular, if there are many group senders for a Data-Security SA, then
         each of them will independently increment the Sequence Number field in the ESP header
         (see Section 2.2 of ESP <xref target="RFC4303" /> and Section 2.5 of AH <xref target="RFC4302" />) thus making it impossible for the 
         group receivers to filter out replayed packets. However, if there is only one
-        group sender for a Data-Security SA, then it is possible to achieve anti-replay protection
+        group sender for a Data-Security SA, then it is possible to achieve replay protection
         with some restrictions (see <xref target="antireplay" />). The GCKS <bcp14>MAY</bcp14> create several Data-Security SAs 
         with the same traffic selectors allowing only a single group sender in each SA 
-        if it is desirable to get anti-replay protection with multiple (but still limited number) of group senders.
+        if it is desirable to get replay protection with multiple (but still limited number) of group senders.
         </t>
 
         <t>IPsec architecture assumes that it is a local matter for an IPsec receiver whether 
-        anti-replay protection is active or not. In other words, an IPsec sender always increments
+        anti-replay service is enabled or not. In other words, an IPsec sender always increments
         the Sequence Number field in the ESP/AH header and a receiver decides whether to check
-        for replayed packets or not. Since in some cases it is known that the anti-replay protection
+        for replayed packets or not. Since in some cases it is known that the replay protection
         is not possible (like in an SA with many group senders), a new transform ID 
         "32-bit Unspecified Numbers" is defined for the Sequence Numbers Properties (SNP) transform type.
         Using this transform ID the the GCKS can inform group members that the uniqueness of sequence
-        numbers for a given SA is not guaranteed. The decision whether to enable anti-replay protection 
+        numbers for a given SA is not guaranteed. The decision whether to enable anti-replay service 
         is still a local matter of a GM (in accordance with IPsec architecture).
         </t>
 
@@ -1465,7 +1465,7 @@ GM (Responder)                GCKS (Initiator)
         <t>IKEv2 IANA registry for Encryption Algorithm Transform IDs <xref target="IKEV2-IANA" /> defines several transforms
         with implicit IV. These transforms rely on ESP Sequence Number for constructing IV 
         (see Implicit IV for Counter-Based Ciphers in ESP <xref target="RFC8750" /> for details).
-        It requires anti-replay protection to be enabled for an ESP SA using these encryption transforms.
+        It requires anti-replay service to be enabled for an ESP SA using these encryption transforms.
         Unless the properties of sequence numbers for a multicast ESP SA include their uniqueness (see <xref target="seqnum" />), 
         encryption transforms that rely on Sequence Number for IV construction <bcp14>MUST NOT</bcp14> be used.
         In any case, such transforms <bcp14>MUST NOT</bcp14> be used for any G-IKEv2 SA (both unicast and multicast).
@@ -2179,9 +2179,9 @@ XXXX -->
               for this transform type. This transform ID defines the following properties.
               Sequence numbers are 32-bit in size and are transmitted in the Sequence Number field of AH and ESP packets. 
               The value of sequence numbers is not guaranteed to be unique for the duration of an SA, thus they
-              are not suitable for anti-replay protection. This transform ID <bcp14>MUST</bcp14> be used by the GCKS in case of multi-sender 
-              multicast Data-Security SAs utilizing protocols ESP or AH to inform the GMs that the anti-replay protection is not expected to be possible.
-              The GCKS <bcp14>MAY</bcp14> also use this transform ID for single-sender multicast Data-Security SAs if anti-replay
+              are not suitable for replay protection. This transform ID <bcp14>MUST</bcp14> be used by the GCKS in case of multi-sender 
+              multicast Data-Security SAs utilizing protocols ESP or AH to inform the GMs that the replay protection is not expected to be possible.
+              The GCKS <bcp14>MAY</bcp14> also use this transform ID for single-sender multicast Data-Security SAs if replay
               protection is not needed (e.g. it is done on application level).
               </t>
             </section>
@@ -3331,7 +3331,7 @@ GM_SENDER_ID            3      TLV      YES
 
         <t> It is possible to use the aggregation and fragmentation mode without congestion control for a single-sender multicast ESP SA created in tunnel mode.
         GMs supporting this mode can send the USE_AGGFRAG notification in the registration request along with the SAg payload.
-        If the Data-Security SA(s) to be installed on GM  utilize the aggregation and fragmentation mode, the GCKS would indicate it by including 
+        If the Data-Security SA(s) to be installed on GMs use the aggregation and fragmentation mode, the GCKS would indicate it by including 
         the USE_AGGFRAG notification along with the GSA payload in its response.
         </t>
       </section>
