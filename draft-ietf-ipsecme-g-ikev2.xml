@@ -1446,13 +1446,13 @@ GM (Responder)                GCKS (Initiator)
         the Sequence Number field in the ESP/AH header and a receiver decides whether to check
         for replayed packets or not. Since in some cases it is known that the replay protection
         is not possible (like in an SA with many group senders), a new transform ID 
-        "32-bit Unspecified Numbers" is defined for the Sequence Numbers Properties (SNP) transform type.
+        "32-bit Unspecified Numbers" is defined for the Sequence Numbers (SN) transform type.
         Using this transform ID the the GCKS can inform group members that the uniqueness of sequence
         numbers for a given SA is not guaranteed. The decision whether to enable anti-replay service 
         is still a local matter of a GM (in accordance with IPsec architecture).
         </t>
 
-        <t> The GCKS <bcp14>MUST</bcp14> include the Sequence Numbers Properties transform in the GSA payload for every Data-Security SA.
+        <t> The GCKS <bcp14>MUST</bcp14> include the Sequence Numbers transform in the GSA payload for every Data-Security SA.
         See <xref target="antireplay" /> for more details.
         </t>
 
@@ -1975,8 +1975,8 @@ GSK_e | GSK_a | GSK_w = KEYMAT
 Protocol    Mandatory Types                       Optional Types
 ----------------------------------------------------------------
 GIKE_UPDATE ENCR, INTEG*, PRF, GCAUTH**, KWA
-ESP         ENCR, SNP]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                            INTEG
-AH          INTEG, SNP]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
+ESP         ENCR, SN]]> <!-- XXXX <![CDATA[, MODE]]> --><![CDATA[                             INTEG
+AH          INTEG, SN]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
               ]]></artwork>
             </figure>
 
@@ -2154,8 +2154,8 @@ KW_ARX                          4
             </section>
 XXXX -->
 
-            <section anchor="antireplay" title="Sequence Numbers Properties Transform">
-              <t>The "Sequence Numbers Properties (SNP)" transform type is defined in <xref target="I-D.ietf-ipsecme-ikev2-rename-esn" />.
+            <section anchor="antireplay" title="Sequence Numbers Transform">
+              <t>The "Sequence Numbers (SN)" transform type is defined in <xref target="I-D.ietf-ipsecme-ikev2-rename-esn" />.
               This transform describes the properties of sequence numbers of IPsec packets. There are currently two transform IDs
               defined for this transform type: "32-bit Sequential Numbers" and "Partially Transmitted 64-bit Sequential Numbers"
               that correspond to non-ESN and ESN cases from AH <xref target="RFC4302" /> and ESP <xref target="RFC4303" /> specifications.
@@ -3621,7 +3621,7 @@ Value       Attribute Type                      Format
         </figure>
         </t>
 
-        <t>This document defines a new value in the "Transform Type 5 - Sequence Numbers Properties Transform IDs" registry:
+        <t>This document defines a new value in the "Transform Type 5 - Sequence Numbers Transform IDs" registry:
         <figure align="center">
           <artwork align="left"><![CDATA[
 Number       Name
