@@ -6,7 +6,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-20" ipr="trust200902" obsoletes="6407">
+<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-21" ipr="trust200902" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -121,7 +121,7 @@
       <t>Large and small groups may use different sets of these mechanisms.
       When a large group of devices are communicating, the GCKS is likely to
       use the GSA_REKEY message for efficiency. This is shown in <xref
-      target="large-groups"></xref>, where multicast communications indicated with double line. 
+      target="large-groups"></xref>, where multicast communications indicated with a double line. 
       (Note: For clarity, IKE_SA_INIT is omitted from <xref target="large-groups" /> and <xref target="small-groups" />).</t>
 
       <figure anchor="large-groups" title="G-IKEv2 used in large groups">
@@ -2202,7 +2202,7 @@ XXXX -->
 
             <figure>
               <artwork align="center"><![CDATA[
-GSA Attributes        Value  Format  Multi-Valued  Protocol
+GSA Attributes        Value  Format  Multi-Valued  Used in Protocol
 ---------------------------------------------------------------------
 Reserved                0
 GSA_KEY_LIFETIME        1    TLV     NO          GIKE_UPDATE, AH, ESP
@@ -2212,7 +2212,10 @@ GSA_NEXT_SPI            3    TLV     YES         GIKE_UPDATE, AH, ESP
             </figure>
 
             The attributes follow the format defined in the IKEv2 <xref
-            target="RFC7296"></xref> section 3.3.5.
+            target="RFC7296"></xref> section 3.3.5. The "Format" column
+            defines what attribute format is allowed: Type/Length/Value (TLV) or Type/Value (TV).
+            The "Multi-Valued" column defines whether multiple instances of the attribute can appear.
+            The "Used in Protocol" column lists the security protocols, for which the attribute can be used.
             </t>
 
             <section anchor="gsa_attr_key_lifetime" title="GSA_KEY_LIFETIME Attribute">
@@ -2334,7 +2337,9 @@ GWP_SENDER_ID_BITS          3      TV      NO
           </t>
 
               <t>The attributes follow the format defined in the IKEv2 <xref
-              target="RFC7296"></xref> section 3.3.5.
+              target="RFC7296"></xref> section 3.3.5. The "Format" column
+              defines what attribute format is allowed: Type/Length/Value (TLV) or Type/Value (TV).
+              The "Multi-Valued" column defines whether multiple instances of the attribute can appear.
               </t>
     
               <section anchor="gwp_attr_atd_dtd" title="GWP_ATD And GWP_DTD Attributes">
@@ -2495,8 +2500,8 @@ GWP_SENDER_ID_BITS          3      TV      NO
           <figure>
             <artwork align="center"><![CDATA[
 Group Key Bag
-Attributes          Value  Format   Multi-Valued    Protocol
-------------------------------------------------------------
+Attributes          Value  Format   Multi-Valued    Used in Protocol
+--------------------------------------------------------------------
 Reserved            0
 SA_KEY              1      TLV      YES*            GIKE_UPDATE
                                     NO              AH, ESP
@@ -2509,7 +2514,10 @@ SA_KEY              1      TLV      YES*            GIKE_UPDATE
           </t>
 
           <t>The attributes follow the format defined in the IKEv2 <xref
-          target="RFC7296"></xref> section 3.3.5.
+          target="RFC7296"></xref> section 3.3.5. The "Format" column
+          defines what attribute format is allowed: Type/Length/Value (TLV) or Type/Value (TV).
+          The "Multi-Valued" column defines whether multiple instances of the attribute can appear.
+          The "Used in Protocol" column lists the security protocols, for which the attribute can be used.
           </t>
 
           <section anchor="gkd_attr_group_key" title="SA_KEY Attribute">
@@ -2598,7 +2606,9 @@ GM_SENDER_ID            3      TLV      YES
           </t>
 
           <t>The attributes follow the format defined in the IKEv2 <xref
-          target="RFC7296"></xref> section 3.3.5.
+          target="RFC7296"></xref> section 3.3.5. The "Format" column
+          defines what attribute format is allowed: Type/Length/Value (TLV) or Type/Value (TV).
+          The "Multi-Valued" column defines whether multiple instances of the attribute can appear.
           </t>
 
           <section anchor="mkd_attr_kwk" title="WRAP_KEY Attribute">
@@ -3495,7 +3505,7 @@ Private Use                             1024-65535
           <figure>
           <preamble></preamble>
           <artwork align="left"><![CDATA[
-GSA Attributes        Value  Format  Multi-Valued  Protocol
+GSA Attributes        Value  Format  Multi-Valued  Used in Protocol
 ---------------------------------------------------------------------
 Reserved                0
 GSA_KEY_LIFETIME        1    TLV     NO          GIKE_UPDATE, AH, ESP
@@ -3530,8 +3540,8 @@ Private Use            16384-32767
           <preamble></preamble>
           <artwork align="left"><![CDATA[
 Group Key Bag
-Attributes          Value  Format   Multi-Valued    Protocol
-------------------------------------------------------------
+Attributes          Value  Format   Multi-Valued    Used in Protocol
+--------------------------------------------------------------------
 Reserved            0
 SA_KEY              1      TLV      YES             GIKE_UPDATE
                                     NO              AH, ESP
@@ -3560,6 +3570,16 @@ Private Use        16384-32767
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
+         <section title="Guidance for Designated Experts">
+           <t> In all cases of Expert Review Policy described here,
+           the Designated Expert (DE) is expected to ascertain the existence of suitable
+           documentation (a specification) as described in <xref target="RFC8126" /> and to
+           verify that the document is permanently and publicly available.  The
+           DE is also expected to check the clarity of purpose and use of the
+           requested code points. Last, the DE must verify that any specification produced outside the IETF does not
+           conflict with work that is active or already published within the IETF.
+           </t>
+         </section>
       </section>
 
       <section title="Changes in the Existing IKEv2 Registries">
