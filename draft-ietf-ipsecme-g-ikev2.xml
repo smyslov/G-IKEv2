@@ -1090,7 +1090,7 @@ P = InnerPlds
 |                       IKE SA Initiator's SPI                  | | |
 |                                                               | | |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ I |
-|                       KEv SA Responder's SPI                  | K |
+|                       IKE SA Responder's SPI                  | K |
 |                                                               | E |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
 |  Next Payload | MjVer | MnVer | Exchange Type |     Flags     | H A
