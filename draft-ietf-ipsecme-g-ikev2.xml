@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="US-ASCII"?>
-<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by Fred Baker (private) -->
-<!-- <!DOCTYPE rfc SYSTEM "rfc2629.dtd"> -->
 <?rfc toc="yes"?>
 <?rfc tocompact="no"?>
 <?rfc tocdepth="3"?>
@@ -533,7 +531,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
       </section>
 
       <section title="G-IKEv2 Member Registration and Secure Channel Establishment" anchor="registration">
-        <t>Registration consists of a minimum of two 
+        <t>Initial registration is combined with establishing a secure connection between the 
+        entity seeking for registration and the GCKS. This process consists of a minimum of two 
         exchanges, IKE_SA_INIT and GSA_AUTH; member registration may have a
         few more messages exchanged if the EAP method, cookie challenge (for
         DoS protection), negotiation of key exchange method or IKEv2 extensions 
@@ -557,9 +556,16 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         group it will provide the GM with the data-security keys (TEKs) and/or group key
         encrypting key (KEK) as part of the GSA_AUTH response message. </t>
 
+        <t>The established secure channel between the GM and the GCKS is in fact IKE SA (as defined in 
+        <xref target="RFC7296"></xref>) and is referred to as such throughout this document. 
+        However, it is <bcp14>NOT RECOMMENDED</bcp14> to use this IKE SA for the purpose of creating
+        unicast Child SAs between the GM and the GCKS, since authentication requirements for 
+        group admission and for unicast communication may differ. In addition, the lifecycle
+        of this IKE SA is determined by the GCKS and this SA can be deleted at any time.
+        </t>
+
         <section anchor="gsa_auth" title="GSA_AUTH Exchange">
-          <t>The GSA_AUTH exchange <bcp14>MUST</bcp14> complete before any other exchanges defined in this document 
-          can be done. GSA_AUTH is used to authenticate the previous exchanges,
+          <t>The GSA_AUTH exchange is used to authenticate the previous exchanges,
           exchange identities and certificates. G-IKEv2 also uses this
           exchange for group member registration and authorization.
           </t>
@@ -627,7 +633,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           target="delete"></xref>.) -->
           </t>
 
-          <t> In addition to the IKEv2 error handling, the GCKS can reject the
+          <t> Possible erors should be handled in accordance with Section 2.21.2 of <xref target="RFC7296"/>.
+          In addition to the IKEv2 error handling, the GCKS can reject the
           registration request when the IDg is invalid or authorization fails,
           etc. In these cases, see <xref target="notify"></xref>, the GSA_AUTH
           response will not include the GSA and KD, but will include a Notify
@@ -637,7 +644,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           group, then the GCKS returns the NO_PROPOSAL_CHOSEN notification.
           Other types of error notifications can be INVALID_GROUP_ID, AUTHORIZATION_FAILED or REGISTRATION_FAILED.</t>
 
-          <figure title="GSA_AUTH Error Response" anchor="gsa_auth_err_response">
+          <figure title="GSA_AUTH Error Response for Group-Related Errors" anchor="gsa_auth_err_response">
               <preamble></preamble>
               <artwork><![CDATA[
  Initiator (GM)                   Responder (GCKS)
@@ -699,7 +706,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           the group-->. The group member <bcp14>SHOULD</bcp14>
           notify the GCKS by sending IDg and the Notify type
           NO_PROPOSAL_CHOSEN<!-- or REGISTRATION_FAILED-->, as shown below. 
-          The GCKS in this case <bcp14>MUST</bcp14> remove the GM from the group IDg.</t>
+          The GCKS in this case <bcp14>MUST</bcp14> remove the GM from the group IDg.
+          </t>
 
           <figure title="GM Reporting Errors in GSA_REGISTRATION Exchange" anchor="gsa_registration_gm_error">
               <preamble></preamble>
@@ -832,10 +840,11 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           </t>
 
           <t>Once a GM has received GIKE_UPDATE policy during a registration, the
-          IKE SA <bcp14>MAY</bcp14> be closed.  By convention, the GCKS closes the IKE SA.  The
-          GKCS <bcp14>MAY</bcp14> choose to keep the IKE SA open for inband rekey,
+          IKE SA <bcp14>MAY</bcp14> be closed.  By convention, the GCKS closes the IKE SA,
+          the GM <bcp14>SHOULD NOT</bcp14> close it.
+          The GKCS <bcp14>MAY</bcp14> choose to keep the IKE SA open for inband rekey,
           especially for small groups.  If inband rekey is used, then the
-          initial IKE SA can be rekeyed with the standard IKEv2 mechanism
+          initial IKE SA can be rekeyed by any side with the standard IKEv2 mechanism
           described in Section 1.3.2 of IKEv2 <xref target="RFC7296" />.  If for some reason the
           IKE SA is closed and no GIKE_UPDATE policy is received during the
           registration process, the GM <bcp14>MUST</bcp14> consider itself excluded from the
@@ -919,8 +928,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           Depending on its policy, the GCKS may have no further need for the
           IKE SA (e.g., it does not plan to initiate an GSA_INBAND_REKEY
           exchange). If the GM does not initiate another registration exchange
-          or Notify (e.g., NO_PROPOSAL_CHOSEN), and also does not close the
-          IKE SA and the GCKS is not intended to use the SA, then after a
+          or Notify (e.g., NO_PROPOSAL_CHOSEN), and the GCKS is not intended to use the SA, then after a
           short period of time the GCKS <bcp14>SHOULD</bcp14> close the IKE SA to save resources.</t>
         </section>
       </section>
@@ -985,8 +993,11 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
             <postamble></postamble>
           </figure></t>
 
-          <t>HDR is defined in <xref target="header"></xref>. The Message ID
-          in this message will start with the value the GCKS sent to the
+          <t>HDR is defined in <xref target="header"></xref>. While GSA_REKEY re-uses IKEv2 header,
+          the "IKE SA Initiator's SPI" and the "IKE SA Responder's SPI" fields are treated as a single field
+          with a length of 16 octets containing the SPI of Rekey SA. The value for this field is provided by the GCKS 
+          in the GSA payload (see <xref target="gsa_policy" />).
+          The Message ID in this message will start with the value the GCKS sent to the
           group members in the attribute GSA_INITIAL_MESSAGE_ID or from
           zero if this attribute wasn't sent. The Message ID will be incremented each time a new
           GSA_REKEY message is sent to the group members.</t>
@@ -1076,10 +1087,10 @@ P = InnerPlds
                     1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ ^
-|                     G-IKEv2 SA Initiator's SPI                | | |
+|                       IKE SA Initiator's SPI                  | | |
 |                                                               | | |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ I |
-|                     G-IKEv2 SA Responder's SPI                | K |
+|                       IKE SA Responder's SPI                  | K |
 |                                                               | E |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
 |  Next Payload | MjVer | MnVer | Exchange Type |     Flags     | H A
@@ -1193,11 +1204,12 @@ P = InnerPlds
             </t>
 
             <t>If the GSA payload includes a Data-Security SA using cipher in a
-            counter-modes of operation and the receiving group member is a
+            counter-mode of operation and the receiving group member is a
             sender for that SA, the group member uses its current Sender-ID value
             with the Data-Security SAs to create counter-mode nonces. If it is
-            a sender and does not hold a current Sender-ID value, it <bcp14>MUST NOT</bcp14>
-            install the Data-Security SAs. It <bcp14>MUST</bcp14> initiate a re-registration
+            a sender and does not hold a current Sender-ID value (for example,
+            when no counter-mode is employed for other Data-Security SAs), 
+            it <bcp14>MUST NOT</bcp14> install the Data-Security SAs. It <bcp14>MUST</bcp14> initiate a re-registration
             to the GCKS in order to obtain an Sender-ID value (along with
             the current group policy). 
             </t>
@@ -1306,7 +1318,11 @@ GM (Responder)                GCKS (Initiator)
           Such Delete payload may be received either in the GSA_REKEY pseudo-exchange or in the GSA_INBAND_REKEY exchange.
           In this situation the group member <bcp14>MUST</bcp14> re-register if it wants to continue 
           participating in this group. The registration is performed as described
-          in <xref target="registration" />. Note, that if <!-- the GSA_INBAND_REKEY exchange 
+          in <xref target="registration" />. It is <bcp14>RECOMMENDED</bcp14> that a GM waits some randomly chosen time
+          before initiating a registration request in this situation to avoid overloading the GCKS.
+          This document doesn't specify the maximum delay, which is implementation-dependent,
+          but it is believed, that the order of seconds suits most situations.
+          Note, that if <!-- the GSA_INBAND_REKEY exchange 
           is used to exclude a group member from the group, and thus --> the unicast SA 
           between the group member and the GCKS exists, then <!-- this SA persists after 
           this exchange and --> the group member may use the GSA_REGISTRATION exchange 
@@ -1880,9 +1896,9 @@ GSK_e | GSK_a | GSK_w = KEYMAT
             The size of this field is determined by the SPI Size field.
             As described above, these SPIs are assigned by the GCKS. 
             In case of GIKE_UPDATE the SPI is the IKEv2 Header SPI pair where the
-            first 8 octets become the "Initiator's SPI" field in the
+            first 8 octets become the "IKE SA Initiator's SPI" field in the
             G-IKEv2 rekey message IKEv2 HDR, and the second 8 octets become
-            the "Responder's SPI" in the same HDR. <!-- When selecting SPI the GCKS
+            the "IKE SA Responder's SPI" in the same HDR. <!-- When selecting SPI the GCKS
             <bcp14>MUST</bcp14> make sure that the sole first 8 octets (corresponding to "Initiator's SPI" 
             field in the IKEv2 header) uniquely identify the Rekey SA. -->
             </t></li>
@@ -1966,7 +1982,9 @@ GSK_e | GSK_a | GSK_w = KEYMAT
             and Key Wrap Algorithm (KWA)<!-- Group Key Management Method (GKM) -->, see <xref target="IANA" />.
             </t>
 
-            <t> Valid Transform Types depend on the SA protocol and are summarized in the table below.
+            <t> Valid transform types depend on the SA protocol and are summarized in the table below.
+            Exactly one instance of each mandatory transform type and at most one instance of each
+            optional transform type <bcp14>MUST</bcp14> be present in the GSA policy substructure.
 
             <figure align="center" anchor="allowed_transforms" title="Valid Transform Types">
               <artwork align="left"><![CDATA[
@@ -2479,9 +2497,9 @@ GWP_SENDER_ID_BITS          3      TV      NO
             <t>SPI (variable) -- Security Parameter Index for the corresponding SA.
             The size of this field is determined by the SPI Size field.
             In case of GIKE_UPDATE the SPI is the IKEv2 Header SPI pair where the
-            first 8 octets become the "Initiator's SPI" field in the
+            first 8 octets become the "IKE SA Initiator's SPI" field in the
             G-IKEv2 rekey message IKEv2 HDR, and the second 8 octets become
-            the "Responder's SPI" in the same HDR. <!-- When selecting SPI the GCKS
+            the "IKE SA Responder's SPI" in the same HDR. <!-- When selecting SPI the GCKS
             <bcp14>MUST</bcp14> make sure that the sole first 8 octets (corresponding to "Initiator's SPI" 
             field in the IKEv2 header) uniquely identify the Rekey SA. -->
             </t>
