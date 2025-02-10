@@ -90,16 +90,16 @@
       </t>
 
       <t>G-IKEv2 defines two ways to perform registration. When a GM first contacts a GCKS it uses the GSA_AUTH exchange 
-      (<xref target="gsa_auth" />) to register to a group. This exchange follows the IKE_SA_INIT exchange 
+      (<xref target="gsa_auth" />) to register to a group. This exchange happens after the IKE_SA_INIT exchange 
       (similarly to the IKE_AUTH exchange in IKEv2) and results in establishing an IKE SA between the GM and the GCKS.
       During this exchange the GCKS authenticates and authorizes the GM, then pushes policy and keys used by the group to the GM. 
-      The other one is the GSA_REGISTRATION exchange (<xref target="gsa_registration" />), 
+      The second new exchange type is the GSA_REGISTRATION exchange (<xref target="gsa_registration" />), 
       which a GM can use within the already established IKE SA with the GCKS (e.g. for registering to another group).
       </t>
 
       <t> Refreshing the group keys can be performed either in an unicast mode via the
-      GSA_INBAND_REKEY exchange (<xref target="gsa_inband_rekey" />) performed over an specific IKE SA between a GM and a GCKS 
-      or in an multicast mode with the GSA_REKEY pseudo exchange (<xref target="gsa_rekey" />), when new keys are being distributed to all GMs.
+      GSA_INBAND_REKEY exchange (<xref target="gsa_inband_rekey" />) performed over a specific IKE SA between a GM and a GCKS 
+      or in a multicast mode with the GSA_REKEY pseudo exchange (<xref target="gsa_rekey" />), when new keys are being distributed to all GMs.
       </t>
 
 <!--
@@ -197,9 +197,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
 
       <section title="Terminology" anchor="terms">
         <t> It is assumed that readers are familiar with the IPsec architecture <xref target="RFC4301" />,
-        and its extension for multicast <xref target="RFC5374" />. This document defines an extension to the IKEv2 protocol 
-        <xref target="RFC7296" />, so it is assumed that readers have an understanding of this protocol.
-        This document uses a notation and conventions from IKEv2 <xref target="RFC7296" /> for describing G-IKEv2 payloads and exchanges.
+        and its extension for multicast <xref target="RFC5374" />. This document defines an extension to the IKEv2 protocol <xref target="RFC7296" />
+        and skips many its details. The notation and conventions from <xref target="RFC7296" /> are used for describing G-IKEv2 payloads and exchanges.
         </t>
 
         <t>The following key terms are used throughout this document (mostly borrowed from Multicast Group Security Architecture <xref target="RFC3740" />, 
@@ -416,9 +415,6 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         G-IKEv2 --> provides group authorization, secure policy and keys download from the GCKS to GMs. 
         </t>
 
-        <t>It is assumed that readers are familiar with the IKEv2 protocol, so
-        this document skips many details that are described in <xref target="RFC7296"></xref>.</t>
-
       <section title="G-IKEv2 Integration into IKEv2 Protocol">
         <t>G-IKEv2 is compatible with most IKEv2 extensions defined so far (see <xref target="ike_ext" /> for details). 
         In particular, it is assumed that, if necessary, the IKE_INTERMEDIATE exchanges <xref target="RFC9242" /> may be utilized 
@@ -551,7 +547,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         See <xref target="wrapped_key" /> for details.
         </t>
 
-        <t>The second exchange GSA_AUTH is similar to the IKEv2 IKE_AUTH exchange <xref target="RFC7296"></xref>.
+        <t>The second exchange called GSA_AUTH is similar to the IKEv2 IKE_AUTH exchange <xref target="RFC7296"></xref>.
         It authenticates the previously exchanged messages, exchanges identities and certificates. 
         The GSA_AUTH messages are encrypted and integrity protected with keys established through the previous
         exchanges, so the identities are hidden from eavesdroppers and all
@@ -561,9 +557,8 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
         group it will provide the GM with the data-security keys (TEKs) and/or group key
         encrypting key (KEK) as part of the GSA_AUTH response message. </t>
 
-        <section anchor="gsa_auth" title="GSA_AUTH exchange">
-          <t>After the GM and GCKS complete the IKE_SA_INIT exchange, 
-          the GSA_AUTH exchange <bcp14>MUST</bcp14> complete before any other exchanges defined in this document 
+        <section anchor="gsa_auth" title="GSA_AUTH Exchange">
+          <t>The GSA_AUTH exchange <bcp14>MUST</bcp14> complete before any other exchanges defined in this document 
           can be done. GSA_AUTH is used to authenticate the previous exchanges,
           exchange identities and certificates. G-IKEv2 also uses this
           exchange for group member registration and authorization.
@@ -590,7 +585,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
  Initiator (GM)                                  Responder (GCKS)
 --------------------                            ------------------
  HDR, SK{IDi, [CERT,] [CERTREQ,] [IDr,]
-      AUTH, IDg, [SAg,] [N(SENDER),] [N]}   -->
+      AUTH, IDg, [SAg,] [N(GROUP_SENDER),] [N]}   -->
               ]]></artwork>
               <postamble></postamble>
           </figure>
@@ -598,7 +593,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           <t>A group member initiates a GSA_AUTH request to join a group indicated 
           by the IDg payload. The GM may include an SAg payload declaring which
           Transforms it is willing to accept. A GM that intends to act as Group Sender 
-          <bcp14>MUST</bcp14> include a Notify payload status type of SENDER,
+          <bcp14>MUST</bcp14> include a Notify payload status type of GROUP_SENDER,
           which enables the GCKS to provide any additional policy necessary by
           group senders.</t>
 
@@ -652,9 +647,11 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
               <postamble></postamble>
           </figure>
 
-          <t>If the group member finds the policy sent by the GCKS is
+          <t>If the GSA_AUTH exchange is completed successfully, but 
+          the group member finds the policy sent by the GCKS is
           unacceptable, the member <bcp14>SHOULD</bcp14> inform the GCKS about this by initiating the GSA_REGISTRATION exchange
-          and sending IDg along with the NO_PROPOSAL_CHOSEN notification in it (see <xref target="gsa_registration" />)).
+          with the IDg payload and the NO_PROPOSAL_CHOSEN notification 
+          (see <xref target="gsa_registration_gm_error" />).
           </t>
         </section>
 
@@ -671,7 +668,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
  Initiator (GM)                   Responder (GCKS)
 --------------------             ------------------
  HDR, SK{IDg, [SAg,] 
-      [N(SENDER),] [N]} -->
+      [N(GROUP_SENDER),] [N]} -->
                              <--  HDR, SK{GSA, KD,]]><!-- XXXX <![CDATA[ [D,]]]> --><![CDATA[ [N]}
               ]]></artwork>
               <postamble></postamble>
@@ -691,7 +688,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
  Initiator (GM)                    Responder (GCKS)
 --------------------              ------------------
  HDR, SK{IDg, [SAg,] 
-      [N(SENDER),] [N]} -->
+      [N(GROUP_SENDER),] [N]} -->
                             <--    HDR, SK{N}
               ]]></artwork>
               <postamble></postamble>
@@ -727,7 +724,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           from IKE_AUTH (without the SAi2, TSi and TSr payloads) along with
           the Group ID informing the GCKS of the group the GM wishes to
           join. An GM intending to emit data traffic <bcp14>MUST</bcp14> send a
-          SENDER Notify message type. The SENDER notification not only signifies that it
+          GROUP_SENDER Notify message type. The GROUP_SENDER notification not only signifies that it
           is a sender, but provides the GM the ability to request
           Sender-ID values, in case the Data-Security SA supports a counter
           mode cipher. <xref target="sid_alloc"></xref> includes guidance
@@ -746,7 +743,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           protocol (AH, ESP, GIKE_UPDATE) and are defined in <xref target="allowed_transforms" />.
           Other transform types <bcp14>SHOULD NOT</bcp14> be included as they will be ignored by the GCKS.
           The SPI length of each Proposal in an SAg is set to zero, and thus the SPI field is empty. 
-          The GCKS <bcp14>MUST</bcp14> ignore SPI length and SPI fields in the SAg payload. 
+          The GCKS <bcp14>MUST NOT</bcp14> use SPI length and SPI fields in the SAg payload. 
           </t>
           
           <t>Generally, a single Proposal for each protocol (GIKE_UPDATE, AH/ESP)
@@ -814,8 +811,9 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
           then it <bcp14>MUST</bcp14> install this SA only in the outgoing direction.
           </t>
 
-          <t>The GSA KEK policy <bcp14>MUST</bcp14> include the attribute GSA_INITIAL_MESSAGE_ID with
-          a first Message ID the GM should expect to receive if it is non-zero.
+          <t>If the first Message ID the GM should expect to receive is non-zero,
+          the GSA KEK policy includes the attribute GSA_INITIAL_MESSAGE_ID with
+          the expected non-zero value.
           The value of the attribute <bcp14>MUST</bcp14> be checked by a GM against any previously received Message ID for this group.
           If it is less than the previously received number, it should be
           considered stale and <bcp14>MUST</bcp14> be ignored. This could happen if two GSA_AUTH
@@ -864,9 +862,9 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
 
           <t>The GSA_AUTH response will include the group policy in the GSA
           payload and keys in the KD payload. If the GCKS policy includes a
-          group rekey option, it <bcp14>MUST</bcp14> include the GSA_INITIAL_MESSAGE_ID attribute, 
-          specifying the starting Message ID the GCKS will use when sending the GSA_REKEY message
-          to the group members if this Message ID is non-zero. This Message ID is used to prevent GSA_REKEY 
+          group rekey option and the initial Message ID value the GCKS will use when sending the GSA_REKEY messages 
+          to the group members is non-zero, then this value is specified in the GSA_INITIAL_MESSAGE_ID attribute. 
+          This Message ID is used to prevent GSA_REKEY 
           message replay attacks and will be increased each time a GSA_REKEY message is sent
           to the group. The GCKS data traffic policy is included in the GSA
           TEK and keys are included in the KD TEK. The GW policy <bcp14>MAY</bcp14> also be
@@ -1175,7 +1173,7 @@ P = InnerPlds
             decrypts the message and verifies its integrity using the current KEK. If the AUTH payload is present
             in the decrypted message, then the GM validates authenticity of the message using the key retrieved 
             in a previous G-IKEv2 exchange. Then the GM verifies the Message ID, and processes
-            the GSA and KD payloads. The group member then downloads the new Data-Security SA(s)
+            the GSA and KD payloads. The group member then installs the new Data-Security SA(s)
             and/or new Rekey SA. The parsing of the payloads is identical to
             the parsing done in the registration exchange.</t>
 
@@ -1982,7 +1980,8 @@ AH          INTEG, SN]]><!-- XXXX <![CDATA[, MODE]]> --><![CDATA[
 
             </t>
             <t>(*) If AEAD encryption algorithm is used, then INTEG transform
-            <bcp14>MUST NOT</bcp14> be specified, otherwise it <bcp14>MUST</bcp14> be specified.
+            either <bcp14>MUST NOT</bcp14> be specified or <bcp14>MUST</bcp14> contain value NONE; 
+            otherwise it <bcp14>MUST</bcp14> be specified and <bcp14>MUST</bcp14> contain value other than NONE.
             </t>
             <t>(**) May only appear at the time of a GM registration, 
             (in the GSA_AUTH and GSA_REGISTRATION exchanges).
@@ -2237,7 +2236,7 @@ GSA_NEXT_SPI            3    TLV     YES         GIKE_UPDATE, AH, ESP
               is a 4 octet unsigned integer in network byte order. 
               </t>
 
-              <t>A single attribute of this type <bcp14>MUST</bcp14> be included into 
+              <t>A single attribute of this type is included into 
               the GSA KEK policy substructure if the initial Message ID of the Rekey SA is non-zero.
               Note, that it is always the case if GMs join the group after some multicast rekey operations
               have already taken place, so in these cases this attribute will be included into
@@ -2669,11 +2668,11 @@ GM_SENDER_ID            3      TLV      YES
             <t>The GM_SENDER_ID attribute (3) is used to download one or more Sender-ID 
             values for the exclusive use of a group member. One or more of this attributes <bcp14>MUST</bcp14> be
             sent by the GCKS if the GM informed the GCKS that it would be a sender (by including
-            the SENDER notification to the request) and at least one of the Data-Security SAs 
+            the GROUP_SENDER notification to the request) and at least one of the Data-Security SAs 
             included in the GSA payload uses counter-based mode of encryption. 
             </t>
 
-            <t>If the GMs has requested multiple Sender-ID values in the SENDER notification, then the GCKS <bcp14>SHOULD</bcp14>
+            <t>If the GMs has requested multiple Sender-ID values in the GROUP_SENDER notification, then the GCKS <bcp14>SHOULD</bcp14>
             provide it with the requested number of Sender-IDs by sending multiple instances of the GM_SENDER_ID
             attribute. The GCKS <bcp14>MAY</bcp14> send fewer values than requested by the GM (e.g. if it is running out of Sender-IDs),
             but it <bcp14>MUST NOT</bcp14> send more than requested.
@@ -3001,8 +3000,8 @@ GM_SENDER_ID            3      TLV      YES
           </t>
         </section>
 
-        <section anchor="sender" title="SENDER Notification">
-          <t>SENDER (16429) is a new status type notification that is sent in 
+        <section anchor="sender" title="GROUP_SENDER Notification">
+          <t>GROUP_SENDER (16429) is a new status type notification that is sent in 
           the GSA_AUTH or the GSA_REGISTRATION exchanges to indicate that the GM
           intends to be sender of data traffic. The data includes a count of 
           how many Sender-ID values the GM desires. The count <bcp14>MUST</bcp14> be 4 octets long
@@ -3153,7 +3152,7 @@ GM_SENDER_ID            3      TLV      YES
                   <list style="hanging" hangIndent="6" >
                     <t hangText = "(1)" >
                     The GWP_SENDER_ID_BITS attribute <bcp14>MUST</bcp14> be present if the GCKS policy includes at least one 
-                    cipher in counter mode of operation and the GM included the SENDER notify into the registration request. 
+                    cipher in counter mode of operation and the GM included the GROUP_SENDER notify into the registration request. 
                     Otherwise it <bcp14>MUST NOT</bcp14> be present. At least one GM_SENDER_ID attribute <bcp14>MUST</bcp14> be present 
                     in the former case (and more <bcp14>MAY</bcp14> be present if the GM requested more Sender-IDs) 
                     and it <bcp14>MUST NOT</bcp14> be present in the latter case.
@@ -3272,7 +3271,7 @@ GM_SENDER_ID            3      TLV      YES
                     <list style="hanging" hangIndent="6" >
                       <t hangText = "(1)" >
                       The GWP_SENDER_ID_BITS attribute <bcp14>MUST</bcp14> be present if the GCKS policy includes at least one 
-                      cipher in counter mode of operation and the GM included the SENDER notify into the registration request. 
+                      cipher in counter mode of operation and the GM included the GROUP_SENDER notify into the registration request. 
                       Otherwise it <bcp14>MUST NOT</bcp14> be present. At least one GM_SENDER_ID attribute <bcp14>MUST</bcp14> be present 
                       in the former case (and more <bcp14>MAY</bcp14> be present if the GM requested more Sender-IDs) 
                       and it <bcp14>MUST NOT</bcp14> be present in the latter case.
@@ -3355,6 +3354,11 @@ GM_SENDER_ID            3      TLV      YES
     </section>
 
     <section title="Security Considerations">
+      <t> When an entity joins the group and becomes a group member, it should 
+      trust the GCKS that only authorized entities are admitted to the group and 
+      that group members will not leak the information shared within the group.
+      </t>
+
       <section title="GSA Registration and Secure Channel">
         <t>G-IKEv2 registration exchange uses IKEv2 IKE_SA_INIT protocols,
         inheriting all the security considerations documented in the Section 5 of <xref target="RFC7296"/>, 
@@ -3446,7 +3450,8 @@ Private Use             1024-65535
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 -->
-
+        <ol>
+        <li>
         <t>This document creates a new IANA registry "Transform Type &lt;TBA&gt; -- Key Wrap Algorithm Transform IDs". 
         The initial values of the new registry are:
           <figure>
@@ -3466,6 +3471,7 @@ Private Use         1024-65535
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
 
+        </li>
 <!-- XXXX
         <t>This document creates a new IANA registry "Transform Type &lt;TBA&gt; - Encapsulation Mode". 
         The initial values of the new registry are:
@@ -3484,6 +3490,7 @@ Private Use     1024-65535
         the Expert Review Policy <xref target="RFC8126" />.</t> 
 -->
 
+        <li>
         <t>This document creates a new IANA registry "Transform Type &lt;TBA&gt; -- Group Controller Authentication Method Transform IDs". 
         The initial values of the new registry are:
           <figure>
@@ -3500,7 +3507,9 @@ Private Use                             1024-65535
           </figure>
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
+        </li>
 
+        <li>
         <t>This document creates a new IANA registry "GSA Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
@@ -3517,7 +3526,9 @@ Private Use        16384-32767
           </figure>
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
+        </li>
 
+        <li>
         <t>This document creates a new IANA registry "Group-wide Policy Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
@@ -3534,7 +3545,9 @@ Private Use            16384-32767
           </figure>
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
+        </li>
 
+        <li>
         <t>This document creates a new IANA registry "Group Key Bag Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
@@ -3551,7 +3564,9 @@ Private Use    16384-32767
           </figure>
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
+        </li>
 
+        <li>
         <t>This document creates a new IANA registry "Member Key Bag Attributes". The initial values of the new registry are:
           <figure>
           <preamble></preamble>
@@ -3569,6 +3584,8 @@ Private Use        16384-32767
           </figure>
         Changes and additions to the unassigned range of this registry are by 
         the Expert Review Policy <xref target="RFC8126" />.</t>
+        </li>
+        </ol>
 
          <section title="Guidance for Designated Experts">
            <t> In all cases of Expert Review Policy described here,
@@ -3583,6 +3600,8 @@ Private Use        16384-32767
       </section>
 
       <section title="Changes in the Existing IKEv2 Registries">
+        <ol>
+        <li>
         <t>This document defines new Exchange Types in the "IKEv2 Exchange Types" registry:
         <figure align="center">
             <artwork align="left"><![CDATA[
@@ -3595,7 +3614,9 @@ Value       Exchange Type
             ]]></artwork>
         </figure>
         </t>
+        </li>
 
+        <li>
         <t>This document defines new Payload Types in the "IKEv2 Payload Types" registry:
         <figure align="center">
             <artwork align="left"><![CDATA[
@@ -3607,7 +3628,9 @@ Value       Next Payload Type               Notation
             ]]></artwork>
         </figure>
         </t>
+        </li>
 
+        <li>
         <t>This document makes the following changes to the "Transform Type Values" registry:
         <list style="symbols" >
           <t>Defines two new transform types -- "Key Wrap Algorithm (KWA)" and "Group Controller Authentication Method (GCAUTH)";</t>
@@ -3630,7 +3653,9 @@ Type  Description                         Used In
           ]]> --></artwork>
         </figure>
         </t>
+        </li>
 
+        <li>
         <t>This document defines a new Attribute Type in the "IKEv2 Transform Attribute Types" registry:
         <figure align="center">
           <artwork align="left"><![CDATA[
@@ -3640,7 +3665,9 @@ Value       Attribute Type                      Format
           ]]></artwork>
         </figure>
         </t>
+        </li>
 
+        <li>
         <t>This document defines a new value in the "Transform Type 5 - Sequence Numbers Transform IDs" registry:
         <figure align="center">
           <artwork align="left"><![CDATA[
@@ -3650,7 +3677,9 @@ Number       Name
           ]]></artwork>
         </figure>
         </t>
+        </li>
 
+        <li>
         <t>This document defines new Notify Message types in the "IKEv2 Notify Message Error Types" registry:
         <figure align="center">
           <artwork align="left"><![CDATA[
@@ -3662,7 +3691,9 @@ Value       Notify Message Error Type
           ]]></artwork>
         </figure>
         </t>
+        </li>
 
+        <li>
         <t>The Notify type with the value 16429 was allocated earlier in the development of G-IKEv2 document
         in the "IKEv2 Notify Message Status Types" registry with the name SENDER_REQUEST_ID. 
         This document renames it as follows:
@@ -3670,11 +3701,13 @@ Value       Notify Message Error Type
           <artwork align="left"><![CDATA[
 Value       Notify Message Status Type
 ------------------------------------------
-16429       SENDER
+16429       GROUP_SENDER
           ]]></artwork>
         </figure>
         </t>
+        </li>
 
+        <li>
         <t>This document defines a new Security Protocol Identifier in the "IKEv2 Security Protocol Identifiers" registry:
         <figure align="center">
             <artwork align="left"><![CDATA[
@@ -3684,6 +3717,8 @@ Protocol ID       Protocol
             ]]></artwork>
         </figure>
         </t>
+        </li>
+        </ol>
 
       </section>
     </section>
