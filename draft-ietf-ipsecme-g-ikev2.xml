@@ -398,7 +398,7 @@ GSA_REGISTRATION   GSA_REKEY |         GSA_REGISTRATION
 
       <section title="G-IKEv2 Member Registration and Secure Channel Establishment" anchor="registration">
         <t>Initial registration is combined with establishing a secure connection between the 
-        entity seeking for registration and the GCKS. This process consists of a minimum of two 
+        entity seeking registration and the GCKS. This process consists of a minimum of two 
         exchanges, IKE_SA_INIT and GSA_AUTH; member registration may have a
         few more messages exchanged if the EAP method, cookie challenge (for
         DoS protection), negotiation of key exchange method or IKEv2 extensions 
@@ -2846,9 +2846,9 @@ GM_SENDER_ID            3      TLV      YES
     </section>
 
     <section title="Security Considerations">
-      <t> When an entity joins the group and becomes a group member, it should 
+      <t> When an entity joins the group and becomes a group member, it has to  
       trust the GCKS that only authorized entities are admitted to the group and 
-      that group members will not leak the information shared within the group.
+      has to trust other group members that they will not leak the information shared within the group.
       </t>
 
       <section title="GSA Registration and Secure Channel">
@@ -3098,7 +3098,7 @@ Value       Next Payload Type               Notation
         <figure align="center">
           <artwork align="left"><![CDATA[
 Type  Description                         Used In
----------------------------------------------------------------------
+--------------------------------------------------------------------
 1     Encryption Algorithm (ENCR)         (IKE, GIKE_UPDATE and ESP)
 2     Pseudo-random Function (PRF)        (IKE, GIKE_UPDATE)
 3     Integrity Algorithm (INTEG)         (IKE, GIKE_UPDATE, AH, 
