@@ -4,7 +4,7 @@
 <?rfc tocdepth="3"?>
 <?rfc symrefs="yes"?>
 <?rfc sortrefs="yes"?>
-<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-21" ipr="trust200902" obsoletes="6407">
+<rfc category="std" submissionType="IETF" docName="draft-ietf-ipsecme-g-ikev2-22" ipr="trust200902" obsoletes="6407">
   <front>
     <title abbrev="G-IKEv2">Group Key Management using IKEv2</title>
 
@@ -1772,7 +1772,7 @@ GSK_e | GSK_a | GSK_w = KEYMAT
               <artwork align="left"><![CDATA[
 Protocol    Mandatory Types                       Optional Types
 ----------------------------------------------------------------
-GIKE_UPDATE ENCR, INTEG*, PRF, GCAUTH**, KWA
+GIKE_UPDATE ENCR, INTEG*, GCAUTH**, KWA
 ESP         ENCR, SN                              INTEG
 AH          INTEG, SN
               ]]></artwork>
@@ -3089,18 +3089,33 @@ Value       Next Payload Type               Notation
         </li>
 
         <li>
-        <t>This document makes the following changes to the "Transform Type Values" registry:
+        <t>This document also updates definition of Payload Type 33 in the "IKEv2 Payload
+        Types" registry by adding an alternative name and notation for it referencing 
+        this document:
+
+        <figure align="center">
+            <artwork align="left"><![CDATA[
+Value     Next Payload Type                                 Notation
+--------------------------------------------------------------------
+33        Security Association                              SA
+          Security Association - GM Supported Transforms    SAg
+            ]]></artwork>
+        </figure>
+        </t>
+        </li>
+
+        <li>
+        <t>This document makes the following changes in the "Transform Type Values" registry:
         <list style="symbols" >
           <t>Defines two new transform types -- "Key Wrap Algorithm (KWA)" and "Group Controller Authentication Method (GCAUTH)";</t>
-          <t>Changes the "Used In" column for the values 1, 2 and 3 as follows;</t>
-          <t>Appends reference to this document to the values 1, 2 and 3;</t>
+          <t>Changes the "Used In" column for the values 1 and 3 as follows;</t>
+          <t>Appends reference to this document to the values 1 and 3;</t>
         </list>
         <figure align="center">
           <artwork align="left"><![CDATA[
 Type  Description                         Used In
 --------------------------------------------------------------------
 1     Encryption Algorithm (ENCR)         (IKE, GIKE_UPDATE and ESP)
-2     Pseudo-random Function (PRF)        (IKE, GIKE_UPDATE)
 3     Integrity Algorithm (INTEG)         (IKE, GIKE_UPDATE, AH, 
                                           optional in ESP)
 <TBA> Key Wrap Algorithm (KWA)            (IKE, GIKE_UPDATE)
